@@ -172,7 +172,7 @@ export default function Sidebar({ profile, profiles, online, badges, view, setVi
                     }}
                   >
                     <span style={{ position: "relative", display: "flex", flexShrink: 0 }}>
-                      <Icon size={17} color={active ? accent : "#847a68"} />
+                      <Icon size={17} color={active ? accent : "#6b7280"} />
                       {!sidebarOpen && badge > 0 && (
                         <span style={{ position: "absolute", top: -4, insetInlineEnd: -4, width: 8, height: 8, borderRadius: "50%", background: colors.danger, border: "1.5px solid #fff" }} />
                       )}

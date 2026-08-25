@@ -96,7 +96,7 @@ function AnnouncementCard({ a, authorName, mgr, onTogglePin, onRemove, featured,
   return (
     <div style={{
       ...panelStyle, borderInlineStart: `4px solid ${featured ? "#c9a227" : colors.accent}`,
-      background: featured ? "linear-gradient(135deg, #fffdf5, #ffffff)" : "#fff",
+      background: featured ? "linear-gradient(135deg, #f7f6ff, #ffffff)" : "#fff",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
         <div style={{ display: "flex", gap: 10, minWidth: 0 }}>

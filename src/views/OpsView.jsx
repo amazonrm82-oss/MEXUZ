@@ -4,7 +4,7 @@ import { colors } from "../lib/theme";
 import { OPS_STATUS_OPTIONS } from "../lib/constants";
 import { canActLikeManager } from "../lib/permissions";
 
-const STAGE_ACCENTS = ["#c98a4b", "#c07a3f", "#b76e42", "#a6673f", "#8f7551", "#6f7d55", "#4f8f5e"];
+const STAGE_ACCENTS = ["#3548c7", "#4a5fd6", "#5a76e0", "#0ea5a5", "#14b8a6", "#0d9488", "#4f8f5e"];
 
 export default function OpsView({ leads, profile, actions, openLead, t, tStatus }) {
   const mgr = canActLikeManager(profile);
