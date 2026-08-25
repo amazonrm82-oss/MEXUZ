@@ -101,7 +101,7 @@ export default function CalendarView({ profile, profiles, leads, showToast, open
     const editable = canEdit(appt);
     return {
       style: {
-        backgroundColor: mine ? colors.accent : editable ? "#c67139" : "#a89a82",
+        backgroundColor: mine ? colors.accent : editable ? "#7c3aed" : "#a89a82",
         border: "none", borderRadius: 6, opacity: editable ? 1 : 0.75,
         cursor: editable ? "grab" : "pointer",
       },
@@ -152,7 +152,7 @@ export default function CalendarView({ profile, profiles, leads, showToast, open
             <span style={{ width: 10, height: 10, borderRadius: 3, background: colors.accent, flexShrink: 0 }} /> {t("שלי")}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-            <span style={{ width: 10, height: 10, borderRadius: 3, background: "#c67139", flexShrink: 0 }} /> {t("ניתן לעריכה")}
+            <span style={{ width: 10, height: 10, borderRadius: 3, background: "#7c3aed", flexShrink: 0 }} /> {t("ניתן לעריכה")}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ width: 10, height: 10, borderRadius: 3, background: "#a89a82", flexShrink: 0 }} /> {t("לצפייה בלבד")}

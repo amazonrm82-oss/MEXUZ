@@ -16,7 +16,7 @@ const ICONS = {
 };
 
 const GROUP_ACCENTS = {
-  "בית": "#c9a227", "לידים": "#c67139", "מכירה ותפעול": "#7a8a5e", "ניהול": "#8a6fae", "ארכיון": "#a89a82", "צוות": "#4b8fa8", "מערכת": "#6b6b6b",
+  "בית": "#c9a227", "לידים": "#3548c7", "מכירה ותפעול": "#0ea5a5", "ניהול": "#8a6fae", "ארכיון": "#a89a82", "צוות": "#4b8fa8", "מערכת": "#6b6b6b",
 };
 
 function buildGroups(profile) {
@@ -167,7 +167,7 @@ export default function Sidebar({ profile, profiles, online, badges, view, setVi
                       borderRadius: 8, border: "none", cursor: "pointer", marginBottom: 2, position: "relative",
                       background: active ? `${accent}18` : "transparent",
                       borderInlineStart: active ? `3px solid ${accent}` : "3px solid transparent",
-                      color: active ? colors.text : "#55503f",
+                      color: active ? colors.text : "#4b5566",
                       fontWeight: active ? 700 : 500, fontSize: 13.5, textAlign: "right",
                     }}
                   >

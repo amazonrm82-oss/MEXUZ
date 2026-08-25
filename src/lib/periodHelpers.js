@@ -1,5 +1,5 @@
 export const MONTH_NAMES = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
-export const YEAR_COLORS = ["#7a8a5e", "#c67139", "#4b8fa8", "#8a6fae", "#b3261e", "#6b6b6b", "#c9a227"];
+export const YEAR_COLORS = ["#0ea5a5", "#3548c7", "#7c3aed", "#d97706", "#dc2626", "#0891b2", "#059669"];
 export const PERIOD_TYPES = [
   ["month", "חודשי"],
   ["quarter", "רבעוני"],

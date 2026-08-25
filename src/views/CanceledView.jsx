@@ -21,7 +21,7 @@ export default function CanceledView({ leads, profile, openLead, actions, t }) {
               <div key={l.id} className="clickable-card" style={{ ...panelStyle, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ cursor: "pointer" }} onClick={() => openLead(l.id)}>
                   <div style={{ fontWeight: 700 }}>{l.name} · {l.business_name}</div>
-                  <div style={{ fontSize: 12.5, color: "#6b5d47" }}>{l.product}</div>
+                  <div style={{ fontSize: 12.5, color: "#4b5566" }}>{l.product}</div>
                 </div>
                 {canEdit ? (
                   <button onClick={() => actions.restoreLead(l.id)} style={buttonGhost}>{t("שחזור")}</button>
