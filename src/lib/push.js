@@ -3,7 +3,7 @@ import { supabase } from "./supabaseClient";
 // Public VAPID key — safe to ship in the client bundle (only the private key, held by the
 // send-task-push Edge Function, must stay secret). Generate your own pair for this deployment
 // (e.g. `npx web-push generate-vapid-keys`) and paste the public half in here — see SETUP.md.
-const VAPID_PUBLIC_KEY = "YOUR_VAPID_PUBLIC_KEY_HERE";
+const VAPID_PUBLIC_KEY = "BLti-c0347S4bvOZtqydJ8twNegA0ZpL9pi9RJfNUVEeMdRtK2kovqJ2OyJ6TKOY_sDQDUoUXSAc2mCMBazA5iU";
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
