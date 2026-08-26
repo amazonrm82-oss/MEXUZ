@@ -17,6 +17,7 @@ import Sidebar from "./components/Sidebar";
 import Toast from "./components/Toast";
 import NewTasksModal from "./components/NewTasksModal";
 import FollowUpPopup from "./components/FollowUpPopup";
+import ManagerNotesModal from "./components/ManagerNotesModal";
 import { colors } from "./lib/theme";
 
 import InboxView from "./views/InboxView";
@@ -142,6 +143,18 @@ function MainApp({ profile }) {
   const leads = useMemo(() => allLeads.filter((l) => isLeadVisibleForUser(l, profile)), [allLeads, profile]);
   const selectedLead = useMemo(() => allLeads.find((l) => l.id === selectedLeadId) || null, [allLeads, selectedLeadId]);
 
+  /* ---- manager-flagged notes: pop up for every manager/deputy on login, and again the moment a
+     new one is flagged while the app is open, until each one is actually marked handled ---- */
+  const { rows: flaggedNotes } = useRealtimeList("lead_notes", { filterColumn: "flagged_for_manager", filterValue: true, orderBy: "created_at", ascending: true });
+  const unresolvedManagerNotes = useMemo(() => flaggedNotes.filter((n) => !n.resolved), [flaggedNotes]);
+  const [managerNotesClosed, setManagerNotesClosed] = useState(false);
+  const seenNoteIdsRef = useRef(new Set());
+  useEffect(() => {
+    const hasNewOne = unresolvedManagerNotes.some((n) => !seenNoteIdsRef.current.has(n.id));
+    if (hasNewOne) setManagerNotesClosed(false);
+    seenNoteIdsRef.current = new Set(unresolvedManagerNotes.map((n) => n.id));
+  }, [unresolvedManagerNotes]);
+
   /* ---- follow-up popup: once per login, if the user has leads sitting in "פולואפ" ---- */
   const [followUpPopupOpen, setFollowUpPopupOpen] = useState(false);
   const followUpShownRef = useRef(false);
@@ -252,6 +265,13 @@ function MainApp({ profile }) {
 
       {followUpPopupOpen && (
         <FollowUpPopup leads={myFollowUpLeads} onOpenLead={openLead} onClose={() => setFollowUpPopupOpen(false)} />
+      )}
+
+      {canActLikeManager(profile) && unresolvedManagerNotes.length > 0 && !managerNotesClosed && (
+        <ManagerNotesModal
+          notes={unresolvedManagerNotes} leads={allLeads} profiles={profiles} profile={profile}
+          openLead={openLead} onClose={() => setManagerNotesClosed(true)}
+        />
       )}
 
       <Toast message={toast} />

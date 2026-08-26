@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { X, MessageCircle, CalendarPlus, Paperclip, FileText, Trash2, Flame } from "lucide-react";
+import { X, MessageCircle, CalendarPlus, Paperclip, FileText, Trash2, Flame, Flag, CheckCircle2 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { colors, inputStyle, buttonPrimary, buttonGhost, buttonDanger } from "../lib/theme";
 import { fmtDate, waPhoneFor, money } from "../lib/format";
@@ -23,6 +23,7 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
 
   const [noteText, setNoteText] = useState("");
   const [followUp, setFollowUp] = useState("");
+  const [flagForManager, setFlagForManager] = useState(false);
   const [msgText, setMsgText] = useState("");
   const [dealItems, setDealItems] = useState([]);
   const [showCloseForm, setShowCloseForm] = useState(false);
@@ -36,8 +37,12 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
 
   async function handleAddNote() {
     if (!noteText.trim()) return;
-    await actions.addNote(lead.id, noteText, followUp || null);
-    setNoteText(""); setFollowUp("");
+    await actions.addNote(lead.id, noteText, followUp || null, flagForManager);
+    setNoteText(""); setFollowUp(""); setFlagForManager(false);
+  }
+
+  async function resolveNote(note) {
+    await supabase.from("lead_notes").update({ resolved: true, resolved_by: profile.id, resolved_at: new Date().toISOString() }).eq("id", note.id);
   }
 
   async function handleAddMessage() {
@@ -158,15 +163,44 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
 
         <Section title={t("הערות")}>
           {notes.map((n) => (
-            <div key={n.id} style={{ fontSize: 13, padding: "6px 0", borderBottom: `1px solid ${colors.border}` }}>
-              <div>{n.text}</div>
-              <div style={{ color: colors.muted, fontSize: 11 }}>{fmtDate(n.created_at)}{n.follow_up ? ` · ${t("מעקב")}: ${n.follow_up}` : ""}</div>
+            <div
+              key={n.id}
+              style={{
+                fontSize: 13, padding: "8px 10px", marginBottom: 6, borderRadius: 8,
+                background: n.flagged_for_manager && !n.resolved ? "#fef2f2" : "transparent",
+                border: n.flagged_for_manager && !n.resolved ? "1px solid #fecaca" : "none",
+                borderBottom: n.flagged_for_manager ? undefined : `1px solid ${colors.border}`,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+                {n.flagged_for_manager && (
+                  n.resolved
+                    ? <CheckCircle2 size={15} color="#0ea5a5" style={{ flexShrink: 0, marginTop: 1 }} />
+                    : <Flag size={15} color="#dc2626" fill="#dc2626" style={{ flexShrink: 0, marginTop: 1 }} />
+                )}
+                <div style={{ flex: 1 }}>{n.text}</div>
+              </div>
+              <div style={{ color: colors.muted, fontSize: 11, marginTop: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>
+                  {fmtDate(n.created_at)}{n.follow_up ? ` · ${t("מעקב")}: ${n.follow_up}` : ""}
+                  {n.resolved ? ` · ${t("טופל")}` : ""}
+                </span>
+                {mgr && n.flagged_for_manager && !n.resolved && (
+                  <button onClick={() => resolveNote(n)} style={{ border: "none", background: "none", color: "#0ea5a5", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>
+                    {t("סמן כטופל")}
+                  </button>
+                )}
+              </div>
             </div>
           ))}
           {!readOnly && (
             <div style={{ marginTop: 8 }}>
               <textarea style={{ ...inputStyle, minHeight: 60, marginBottom: 6 }} placeholder={t("הערה חדשה…")} value={noteText} onChange={(e) => setNoteText(e.target.value)} />
               <input type="date" style={{ ...inputStyle, marginBottom: 6 }} value={followUp} onChange={(e) => setFollowUp(e.target.value)} />
+              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, marginBottom: 6, cursor: "pointer", color: "#dc2626", fontWeight: 600 }}>
+                <input type="checkbox" checked={flagForManager} onChange={(e) => setFlagForManager(e.target.checked)} />
+                <Flag size={13} /> {t("סמן כהערה למנהל")}
+              </label>
               <button onClick={handleAddNote} style={buttonGhost}>{t("הוסף הערה")}</button>
             </div>
           )}

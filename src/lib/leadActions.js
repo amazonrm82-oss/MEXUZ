@@ -31,10 +31,11 @@ export function useLeadActions(showToast, profile) {
     return { error };
   }, [showToast]);
 
-  const addNote = useCallback(async (leadId, text, followUp) => {
+  const addNote = useCallback(async (leadId, text, followUp, flaggedForManager) => {
     if (!text.trim()) return;
     const { error } = await supabase.from("lead_notes").insert({
       lead_id: leadId, author_id: profile.id, text: text.trim(), follow_up: followUp || null,
+      flagged_for_manager: !!flaggedForManager,
     });
     if (error) showToast("שגיאה בהוספת הערה");
   }, [profile, showToast]);
