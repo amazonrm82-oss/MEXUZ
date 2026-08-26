@@ -100,12 +100,14 @@ export function useLeadActions(showToast, profile) {
   }, [showToast]);
 
   const cancelLead = useCallback(async (id) => {
-    await supabase.from("leads").update({ canceled: true, canceled_at: new Date().toISOString() }).eq("id", id);
+    const { error } = await supabase.from("leads").update({ canceled: true, canceled_at: new Date().toISOString() }).eq("id", id);
+    if (error) { showToast("שגיאה בביטול הליד"); return; }
     showToast("הליד בוטל");
   }, [showToast]);
 
   const restoreLead = useCallback(async (id) => {
-    await supabase.from("leads").update({ canceled: false, canceled_at: null }).eq("id", id);
+    const { error } = await supabase.from("leads").update({ canceled: false, canceled_at: null }).eq("id", id);
+    if (error) { showToast("שגיאה בשחזור הליד"); return; }
     showToast("הליד שוחזר");
   }, [showToast]);
 
@@ -116,14 +118,16 @@ export function useLeadActions(showToast, profile) {
   }, [showToast]);
 
   const markDealPaid = useCallback(async (id) => {
-    await supabase.from("leads").update({ archived: true, owes_payment: false }).eq("id", id);
+    const { error } = await supabase.from("leads").update({ archived: true, owes_payment: false }).eq("id", id);
+    if (error) { showToast("שגיאה בעדכון תשלום"); return; }
     showToast("סומן כשולם — העסקה עברה להיסטוריה");
   }, [showToast]);
 
   const markDealUnpaid = useCallback(async (lead) => {
-    await supabase.from("leads").update({
+    const { error } = await supabase.from("leads").update({
       owes_payment: true, unpaid_since: lead.unpaid_since || new Date().toISOString(), paid_amount: lead.paid_amount || 0,
     }).eq("id", lead.id);
+    if (error) { showToast("שגיאה בעדכון תשלום"); return; }
     showToast('העסקה הועברה ל"חייבים בתשלום"');
   }, [showToast]);
 
@@ -136,10 +140,12 @@ export function useLeadActions(showToast, profile) {
     if (!amount || amount <= 0) { showToast("יש להזין סכום תשלום"); return; }
     const newPaid = (lead.paid_amount || 0) + amount;
     if (newPaid >= revenue) {
-      await supabase.from("leads").update({ paid_amount: newPaid, owes_payment: false, archived: true }).eq("id", lead.id);
+      const { error } = await supabase.from("leads").update({ paid_amount: newPaid, owes_payment: false, archived: true }).eq("id", lead.id);
+      if (error) { showToast("שגיאה ברישום תשלום"); return; }
       showToast("שולם במלואו — העסקה עברה להיסטוריה");
     } else {
-      await supabase.from("leads").update({ paid_amount: newPaid }).eq("id", lead.id);
+      const { error } = await supabase.from("leads").update({ paid_amount: newPaid }).eq("id", lead.id);
+      if (error) { showToast("שגיאה ברישום תשלום"); return; }
       showToast("התשלום נרשם");
     }
   }, [showToast]);

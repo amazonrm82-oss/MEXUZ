@@ -4,13 +4,14 @@ import { supabase } from "../lib/supabaseClient";
 import { colors, inputStyle, buttonPrimary, buttonGhost, buttonDanger } from "../lib/theme";
 import { fmtDate, waPhoneFor, money } from "../lib/format";
 import { LEAD_STATUS_BASE, PROCESS_STATUS_OPTIONS, OPS_STATUS_OPTIONS, REMIND_BEFORE_OPTIONS } from "../lib/constants";
-import { canActLikeManager } from "../lib/permissions";
+import { canActLikeManager, canResetSystem } from "../lib/permissions";
 import { useRealtimeList } from "../lib/useTable";
 import DealItemCalculator from "../components/DealItemCalculator";
 import AppointmentPickerModal from "../components/AppointmentPickerModal";
 
 export default function LeadDrawer({ lead, profile, profiles, catalog, actions, showToast, onClose, readOnly, t, tStatus }) {
   const mgr = canActLikeManager(profile);
+  const canDelete = canResetSystem(profile);
   const { rows: notes } = useRealtimeList("lead_notes", { filterColumn: "lead_id", filterValue: lead.id, orderBy: "created_at", ascending: true });
   const { rows: orderLines } = useRealtimeList("order_lines", { filterColumn: "lead_id", filterValue: lead.id, orderBy: "created_at", ascending: true });
   const { rows: messages } = useRealtimeList("lead_messages", { filterColumn: "lead_id", filterValue: lead.id, orderBy: "created_at", ascending: true });
@@ -47,6 +48,14 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
     await actions.closeLeadWithItems(lead, profile.id, profile.name, dealItems);
     setDealItems([]);
     setShowCloseForm(false);
+  }
+
+  async function handleDeleteLead() {
+    if (!window.confirm(`${t("למחוק את הליד")} "${lead.name}"? ${t("הפעולה בלתי הפיכה.")}`)) return;
+    const { error } = await supabase.from("leads").delete().eq("id", lead.id);
+    if (error) { showToast(t("שגיאה במחיקת הליד")); return; }
+    showToast(t("הליד נמחק"));
+    onClose();
   }
 
   const waLink = `https://wa.me/${waPhoneFor(lead.phone)}`;
@@ -248,6 +257,11 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
         )}
         {mgr && lead.canceled && !readOnly && (
           <button onClick={() => actions.restoreLead(lead.id)} style={{ ...buttonGhost, marginTop: 10 }}>{t("שחזור ליד")}</button>
+        )}
+        {canDelete && !readOnly && (
+          <button onClick={handleDeleteLead} style={{ ...buttonGhost, marginTop: 10, color: colors.danger, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Trash2 size={14} /> {t("מחק ליד לצמיתות")}
+          </button>
         )}
       </div>
 

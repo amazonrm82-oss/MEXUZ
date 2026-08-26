@@ -46,7 +46,8 @@ export default function InboxView({ leads, profile, profiles, openLead, actions,
 
   async function changeProcessStatus(lead, next) {
     if (next === "מספר שגוי" && !window.confirm(`${t("למחוק את הליד")} "${lead.name}"? ${t("הפעולה בלתי הפיכה.")}`)) return;
-    await actions.updateLead(lead.id, { process_status: next });
+    const { error } = await actions.updateLead(lead.id, { process_status: next });
+    if (error) return;
     if (next === "מספר שגוי") showToast(t("הליד נמחק"));
     else if (next === "לא מעוניין") showToast(t('הליד הועבר ל"לא מעוניינים"'));
   }

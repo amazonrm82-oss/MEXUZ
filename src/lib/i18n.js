@@ -143,6 +143,8 @@ export const EN_TRANSLATIONS = {
   "למחוק את הליד": "Delete the lead",
   "הפעולה בלתי הפיכה.": "This action cannot be undone.",
   "הליד נמחק": "Lead deleted",
+  "שגיאה במחיקת הליד": "Error deleting the lead",
+  "מחק ליד לצמיתות": "Permanently delete lead",
   'הליד הועבר ל"לא מעוניינים"': 'Lead moved to "Not Interested"',
   "אין לידים בשלב הזה": "No leads at this stage",
   "ממתין לאישור מאז": "Awaiting approval since",
