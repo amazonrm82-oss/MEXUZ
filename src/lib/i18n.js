@@ -692,11 +692,9 @@ export const EN_TRANSLATIONS = {
 
   // AppointmentPickerModal
   "פגישה עם": "Meeting with",
-  "יש לבחור זמן בלוח השנה": "Please select a time on the calendar",
-  "שגיאה בקביעת פגישה": "Error scheduling the appointment",
   "קביעת פגישה עבור": "Schedule appointment for",
-  'לחץ על משבצת פנויה בלוח כדי לבחור זמן, או על פגישה קיימת כדי לראות מתי היא — כך רואים את כל הלו"ז לפני שקובעים.':
-    "Click an open slot on the calendar to pick a time, or an existing appointment to see when it is — this way you see the whole schedule before booking.",
+  "לחץ על משבצת פנויה כדי לקבוע פגישה חדשה, גרור פגישה קיימת שלך כדי להזיז אותה, או פתח אותה ללחיצה כדי לערוך תאריך/שעה ידנית.":
+    "Click an open slot to schedule a new appointment, drag one of your own appointments to move it, or click one to edit its date/time manually.",
   "נבחר": "Selected",
   "לא נבחר זמן": "No time selected",
   "קובע…": "Scheduling…",
