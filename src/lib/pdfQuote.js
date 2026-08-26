@@ -43,7 +43,10 @@ function ensureFont(doc) {
 
 // rows: array of [label, value, emphasize?] — emphasize draws a divider line above and grows
 // the font, used for the total line.
-export function downloadQuotePdf({ filename, title, subtitle, rows, footer }) {
+// sections (optional): array of { heading, items: string[] } rendered as numbered lists after the
+// price rows — used to turn a plain price quote into more of a scope-of-work document (e.g. the
+// project delivery stages a client should expect), without touching the price-calculation logic.
+export function downloadQuotePdf({ filename, title, subtitle, rows, sections, footer }) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   ensureFont(doc);
   const rightMargin = 555;
@@ -70,6 +73,19 @@ export function downloadQuotePdf({ filename, title, subtitle, rows, footer }) {
     doc.text(toVisualRTL(line), rightMargin, y, { align: "right" });
     y += emphasize ? 26 : 20;
     if (emphasize) doc.setFontSize(12);
+  });
+
+  (sections || []).forEach(({ heading, items }) => {
+    if (!items || !items.length) return;
+    y += 16;
+    doc.setFontSize(13);
+    doc.text(toVisualRTL(heading), rightMargin, y, { align: "right" });
+    y += 20;
+    doc.setFontSize(11.5);
+    items.forEach((item, i) => {
+      doc.text(toVisualRTL(`${i + 1}. ${item}`), rightMargin, y, { align: "right" });
+      y += 18;
+    });
   });
 
   if (footer) {

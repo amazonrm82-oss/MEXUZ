@@ -42,6 +42,7 @@ import TasksView from "./views/TasksView";
 import NotInterestedView from "./views/NotInterestedView";
 import AnnouncementsView from "./views/AnnouncementsView";
 import OurSystemsView from "./views/OurSystemsView";
+import SupportTicketsView from "./views/SupportTicketsView";
 import CustomTabView from "./views/CustomTabView";
 import LeadDrawer from "./views/LeadDrawer";
 
@@ -51,6 +52,7 @@ const DEFAULT_NAV_LABELS = {
   suppliers: "ספקים וקבלני משנה", calendar: "יומן", history: "היסטוריה", canceled: "לידים שבוטלו", settings: "הגדרות",
   teamChat: "צ'אט צוות", download: "הורדה למכשיר", reports: "דוחות תקופתיים", myReports: "הדוח שלי",
   tasks: "משימות ותזכורות", notInterested: "לא מעוניינים", home: "לוח מודעות", ourSystems: "המערכות שלנו",
+  supportTickets: "פניות תמיכה",
 };
 
 export default function App() {
@@ -282,6 +284,7 @@ function ViewRouter(props) {
   if (view === "notInterested") return <NotInterestedView {...props} />;
   if (view === "home") return <AnnouncementsView {...props} />;
   if (view === "ourSystems") return <OurSystemsView {...props} />;
+  if (view === "supportTickets") return <SupportTicketsView {...props} />;
   if (view.startsWith("custom:")) {
     const tab = customTabs.find((t) => "custom:" + t.id === view);
     return <CustomTabView tab={tab} />;

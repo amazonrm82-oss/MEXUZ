@@ -3,6 +3,7 @@ import { Calculator } from "lucide-react";
 import { inputStyle, buttonPrimary, buttonGhost, panelStyle, colors } from "../lib/theme";
 import { computeQuote } from "../lib/pricing";
 import { money } from "../lib/format";
+import { OPS_STATUS_OPTIONS } from "../lib/constants";
 import { useLanguage } from "../lib/LanguageContext";
 import PageHeader from "../components/PageHeader";
 
@@ -62,6 +63,7 @@ export default function CalcView({ catalog, profile }) {
       title: "MEXUZ",
       subtitle: `${t("הצעת מחיר")} · ${new Date().toLocaleDateString(lang === "en" ? "en-US" : "he-IL")}`,
       rows,
+      sections: [{ heading: t("שלבי העבודה"), items: OPS_STATUS_OPTIONS.map((s) => t(s)) }],
       footer: profile?.name ? `${t('הוכן ע"י')} ${profile.name}` : null,
     });
   }
