@@ -306,6 +306,10 @@ export const EN_TRANSLATIONS = {
 
   // Notifications
   "אין פריטים": "No items",
+  "פניות תמיכה דחופות פתוחות": "Urgent open support tickets",
+  "פניות תמיכה פתוחות מעל 3 ימים": "Support tickets open over 3 days",
+  "נפתחה": "Opened",
+  "לחודש": "per month",
   "רק סגן או מנהל יכולים לאשר עסקה": "Only a deputy or manager can approve a deal",
 
   // History

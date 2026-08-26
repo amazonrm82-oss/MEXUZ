@@ -8,10 +8,31 @@ import { TWO_WEEKS_MS, UNCLAIMED_ALERT_MS, STUCK_LEAD_MS } from "../lib/constant
 import { canActLikeManager } from "../lib/permissions";
 import PageHeader from "../components/PageHeader";
 
-export default function NotificationsView({ leads, profile, openLead, actions, t, tStatus }) {
+const RENEWAL_WARNING_DAYS = 30;
+const STALE_TICKET_MS = 3 * 24 * 3600 * 1000;
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  return Math.ceil((new Date(dateStr + "T00:00:00").getTime() - Date.now()) / 86400000);
+}
+
+export default function NotificationsView({ leads, profile, openLead, actions, setView, t, tStatus }) {
   const mgr = canActLikeManager(profile);
   const { rows: allNotes } = useRealtimeList("lead_notes", { orderBy: "follow_up", ascending: true });
+  const { rows: systems } = useRealtimeList("company_systems", { orderBy: "sort_order", ascending: true });
+  const { rows: tickets } = useRealtimeList("support_tickets", { orderBy: "created_at", ascending: true });
   const { linesFor } = useOrderLines();
+
+  const renewalsSoon = useMemo(() => systems.filter((s) => {
+    if (s.status !== "active") return false;
+    const days = daysUntil(s.renewal_date);
+    return days != null && days <= RENEWAL_WARNING_DAYS;
+  }), [systems]);
+
+  const urgentTickets = useMemo(() => tickets.filter((tk) => tk.status !== "closed" && tk.priority === "urgent"), [tickets]);
+  const staleTickets = useMemo(() => tickets.filter((tk) =>
+    tk.status !== "closed" && tk.priority !== "urgent" && Date.now() - new Date(tk.created_at).getTime() > STALE_TICKET_MS
+  ), [tickets]);
 
   const pending = useMemo(() => leads.filter((l) => l.pending_approval), [leads]);
   const late = useMemo(() => leads.filter((l) => l.owes_payment && l.unpaid_since && Date.now() - new Date(l.unpaid_since).getTime() > TWO_WEEKS_MS), [leads]);
@@ -28,6 +49,44 @@ export default function NotificationsView({ leads, profile, openLead, actions, t
   return (
     <div>
       <PageHeader icon={Bell} title={t("התראות")} />
+
+      {urgentTickets.length > 0 && (
+        <Block title={`${t("פניות תמיכה דחופות פתוחות")} (${urgentTickets.length})`}>
+          {urgentTickets.map((tk) => (
+            <div key={tk.id} className="clickable-card" style={{ ...panelStyle, marginBottom: 8, cursor: "pointer", borderInlineStart: "4px solid #dc2626" }} onClick={() => setView("supportTickets")}>
+              <div style={{ fontWeight: 700, color: colors.danger }}>{tk.title}</div>
+              <div style={{ fontSize: 12.5, color: colors.mutedText }}>{t("נפתחה")} {fmtDate(tk.created_at)}</div>
+            </div>
+          ))}
+        </Block>
+      )}
+
+      {staleTickets.length > 0 && (
+        <Block title={`${t("פניות תמיכה פתוחות מעל 3 ימים")} (${staleTickets.length})`}>
+          {staleTickets.map((tk) => (
+            <div key={tk.id} className="clickable-card" style={{ ...panelStyle, marginBottom: 8, cursor: "pointer" }} onClick={() => setView("supportTickets")}>
+              <div style={{ fontWeight: 700 }}>{tk.title}</div>
+              <div style={{ fontSize: 12.5, color: colors.mutedText }}>{t("נפתחה")} {fmtDate(tk.created_at)}</div>
+            </div>
+          ))}
+        </Block>
+      )}
+
+      {mgr && renewalsSoon.length > 0 && (
+        <Block title={`${t("חוזים לקראת חידוש")} (${renewalsSoon.length})`}>
+          {renewalsSoon.map((s) => {
+            const days = daysUntil(s.renewal_date);
+            return (
+              <div key={s.id} className="clickable-card" style={{ ...panelStyle, marginBottom: 8, cursor: "pointer", borderInlineStart: "4px solid #d97706" }} onClick={() => setView("ourSystems")}>
+                <div style={{ fontWeight: 700 }}>{s.name} {s.client_name ? `· ${s.client_name}` : ""}</div>
+                <div style={{ fontSize: 12.5, color: "#d97706" }}>
+                  {days <= 0 ? t("החוזה פג!") : `${t("חידוש בעוד")} ${days} ${t("ימים")}`} · {money(s.monthly_fee)} {t("לחודש")}
+                </div>
+              </div>
+            );
+          })}
+        </Block>
+      )}
 
       <Block title={`${t("עסקאות ממתינות לאישור")} (${pending.length})`}>
         {pending.map((l) => {
