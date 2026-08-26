@@ -28,7 +28,7 @@ function daysUntil(dateStr) {
 // Portfolio of systems MEXUZ has built and maintains for clients (plus MEXUZ itself), doubling as
 // a recurring-revenue tracker: each system can carry a monthly maintenance/hosting fee and a
 // contract renewal date, so managers can see total MRR and which contracts need attention soon.
-export default function OurSystemsView({ profile, t }) {
+export default function OurSystemsView({ profile, openLead, t }) {
   const mgr = canActLikeManager(profile);
   const { rows: systems } = useRealtimeList("company_systems", { orderBy: "sort_order", ascending: true });
   const [open, setOpen] = useState(false);
@@ -142,7 +142,7 @@ export default function OurSystemsView({ profile, t }) {
       ) : (
         <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
           {systems.map((s) => (
-            <SystemCard key={s.id} s={s} mgr={mgr} onRemove={removeSystem} onUpdate={updateField} t={t} />
+            <SystemCard key={s.id} s={s} mgr={mgr} onRemove={removeSystem} onUpdate={updateField} openLead={openLead} t={t} />
           ))}
         </div>
       )}
@@ -150,9 +150,24 @@ export default function OurSystemsView({ profile, t }) {
   );
 }
 
-function SystemCard({ s, mgr, onRemove, onUpdate, t }) {
+function SystemCard({ s, mgr, onRemove, onUpdate, openLead, t }) {
   const days = daysUntil(s.renewal_date);
   const renewalSoon = days != null && days <= RENEWAL_WARNING_DAYS;
+  const { rows: charges } = useRealtimeList("system_charges", { filterColumn: "system_id", filterValue: s.id, orderBy: "due_date", ascending: false });
+  const [showCharges, setShowCharges] = useState(false);
+  const unpaidCount = useMemo(() => charges.filter((c) => !c.paid).length, [charges]);
+
+  async function addThisMonthCharge() {
+    const today = new Date();
+    const dueDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+    await supabase.from("system_charges").insert({ system_id: s.id, amount: s.monthly_fee || 0, due_date: dueDate });
+  }
+  async function toggleChargePaid(charge) {
+    await supabase.from("system_charges").update({ paid: !charge.paid, paid_at: !charge.paid ? new Date().toISOString() : null }).eq("id", charge.id);
+  }
+  async function removeCharge(id) {
+    await supabase.from("system_charges").delete().eq("id", id);
+  }
 
   return (
     <div style={{ ...panelStyle, borderInlineStart: `4px solid ${STATUS_COLORS[s.status] || colors.muted}` }}>
@@ -160,6 +175,14 @@ function SystemCard({ s, mgr, onRemove, onUpdate, t }) {
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 800, fontSize: 15.5 }}>{s.name}</div>
           {s.client_name && <div style={{ fontSize: 12, color: colors.mutedText, marginTop: 2 }}>{s.client_name}</div>}
+          {s.source_lead_id && (
+            <button
+              onClick={() => openLead(s.source_lead_id)}
+              style={{ border: "none", background: "none", cursor: "pointer", color: colors.accent, fontSize: 11, fontWeight: 600, padding: 0, marginTop: 4 }}
+            >
+              {t("פתח את הליד המקורי")} ←
+            </button>
+          )}
         </div>
         {mgr && (
           <button onClick={() => onRemove(s.id)} title={t("מחק")} style={{ border: "none", background: "none", cursor: "pointer", color: colors.muted, flexShrink: 0 }}>
@@ -226,6 +249,40 @@ function SystemCard({ s, mgr, onRemove, onUpdate, t }) {
           <a href={s.url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, color: colors.accent, fontWeight: 600, textDecoration: "none" }}>
             {t("פתיחה")} <ExternalLink size={13} />
           </a>
+        )}
+      </div>
+
+      <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${colors.border}` }}>
+        <button
+          onClick={() => setShowCharges((v) => !v)}
+          style={{ border: "none", background: "none", cursor: "pointer", padding: 0, fontSize: 12, fontWeight: 700, color: unpaidCount > 0 ? colors.danger : colors.mutedText, display: "flex", alignItems: "center", gap: 4 }}
+        >
+          {t("תשלומים")} {unpaidCount > 0 ? `(${unpaidCount} ${t("לא שולמו")})` : `(${charges.length})`}
+        </button>
+        {showCharges && (
+          <div style={{ marginTop: 8, display: "grid", gap: 6 }}>
+            {charges.length === 0 && <div style={{ fontSize: 11.5, color: colors.muted }}>{t("אין עדיין חיובים")}</div>}
+            {charges.map((c) => (
+              <div key={c.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: mgr ? "pointer" : "default" }}>
+                  <input type="checkbox" checked={c.paid} disabled={!mgr} onChange={() => toggleChargePaid(c)} />
+                  <span style={{ color: c.paid ? colors.mutedText : colors.danger, fontWeight: c.paid ? 400 : 700 }}>
+                    {fmtDateOnly(c.due_date)} · {money(c.amount)}
+                  </span>
+                </label>
+                {mgr && (
+                  <button onClick={() => removeCharge(c.id)} style={{ border: "none", background: "none", cursor: "pointer", color: colors.muted }}>
+                    <Trash2 size={12} />
+                  </button>
+                )}
+              </div>
+            ))}
+            {mgr && (
+              <button onClick={addThisMonthCharge} style={{ ...buttonGhost, fontSize: 11.5, padding: "4px 9px", marginTop: 4 }}>
+                + {t("הוסף חיוב לחודש הנוכחי")}
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

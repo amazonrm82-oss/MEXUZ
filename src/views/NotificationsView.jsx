@@ -21,13 +21,21 @@ export default function NotificationsView({ leads, profile, openLead, actions, s
   const { rows: allNotes } = useRealtimeList("lead_notes", { orderBy: "follow_up", ascending: true });
   const { rows: systems } = useRealtimeList("company_systems", { orderBy: "sort_order", ascending: true });
   const { rows: tickets } = useRealtimeList("support_tickets", { orderBy: "created_at", ascending: true });
+  const { rows: systemCharges } = useRealtimeList("system_charges", { orderBy: "due_date", ascending: true });
   const { linesFor } = useOrderLines();
+
+  const systemName = (id) => systems.find((s) => s.id === id)?.name || "—";
 
   const renewalsSoon = useMemo(() => systems.filter((s) => {
     if (s.status !== "active") return false;
     const days = daysUntil(s.renewal_date);
     return days != null && days <= RENEWAL_WARNING_DAYS;
   }), [systems]);
+
+  const overdueCharges = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return systemCharges.filter((c) => !c.paid && c.due_date <= today);
+  }, [systemCharges]);
 
   const urgentTickets = useMemo(() => tickets.filter((tk) => tk.status !== "closed" && tk.priority === "urgent"), [tickets]);
   const staleTickets = useMemo(() => tickets.filter((tk) =>
@@ -85,6 +93,17 @@ export default function NotificationsView({ leads, profile, openLead, actions, s
               </div>
             );
           })}
+        </Block>
+      )}
+
+      {mgr && overdueCharges.length > 0 && (
+        <Block title={`${t("חיובי מערכות שלא שולמו")} (${overdueCharges.length})`}>
+          {overdueCharges.map((c) => (
+            <div key={c.id} className="clickable-card" style={{ ...panelStyle, marginBottom: 8, cursor: "pointer", borderInlineStart: `4px solid ${colors.danger}` }} onClick={() => setView("ourSystems")}>
+              <div style={{ fontWeight: 700, color: colors.danger }}>{systemName(c.system_id)}</div>
+              <div style={{ fontSize: 12.5, color: colors.mutedText }}>{t("לתאריך")} {c.due_date} · {money(c.amount)}</div>
+            </div>
+          ))}
         </Block>
       )}
 

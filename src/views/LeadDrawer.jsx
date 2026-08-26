@@ -18,6 +18,8 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
   const { rows: files } = useRealtimeList("lead_files", { filterColumn: "lead_id", filterValue: lead.id, orderBy: "created_at", ascending: false });
   const { rows: templates } = useRealtimeList("message_templates", { orderBy: "sort_order", ascending: true });
   const { rows: activityLog } = useRealtimeList("lead_activity_log", { filterColumn: "lead_id", filterValue: lead.id, orderBy: "created_at", ascending: false });
+  const { rows: linkedSystems } = useRealtimeList("company_systems", { filterColumn: "source_lead_id", filterValue: lead.id });
+  const linkedSystem = linkedSystems[0] || null;
 
   const [noteText, setNoteText] = useState("");
   const [followUp, setFollowUp] = useState("");
@@ -56,6 +58,18 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
     if (error) { showToast(t("שגיאה במחיקת הליד")); return; }
     showToast(t("הליד נמחק"));
     onClose();
+  }
+
+  async function convertToSystem() {
+    const { error } = await supabase.from("company_systems").insert({
+      name: lead.product || lead.name,
+      client_name: lead.business_name || lead.name,
+      description: `${t("נוצר מהעסקה של")} ${lead.name}`,
+      status: "active",
+      source_lead_id: lead.id,
+    });
+    if (error) { showToast(t("שגיאה ביצירת המערכת")); return; }
+    showToast(t('המערכת נוספה ל"המערכות שלנו" — יש להשלים דמי תחזוקה ותאריך חידוש'));
   }
 
   const waLink = `https://wa.me/${waPhoneFor(lead.phone)}`;
@@ -205,6 +219,15 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
                   if (nextIsDelivery && !mgr) return null;
                   return <button onClick={() => actions.advanceOps(lead)} style={{ ...buttonGhost, marginTop: 6 }}>{t("קדם שלב")}</button>;
                 })()}
+                {mgr && lead.ops_status === "נמסר ללקוח" && (
+                  linkedSystem ? (
+                    <div style={{ marginTop: 8, fontSize: 12, color: colors.accent, fontWeight: 700 }}>
+                      ✓ {t("כבר מקושר למערכת")}: "{linkedSystem.name}"
+                    </div>
+                  ) : (
+                    <button onClick={convertToSystem} style={{ ...buttonPrimary, marginTop: 8 }}>{t("הפוך למערכת פעילה")}</button>
+                  )
+                )}
               </div>
             )}
             {mgr && !readOnly && <SupplierLinkMini leadId={lead.id} showToast={showToast} t={t} />}
