@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import {
   Inbox, Briefcase, UserPlus, Calculator, Upload, Factory, CalendarDays,
   BarChart3, Users, Bell, CreditCard, Truck, Archive, XCircle, Settings, FileText, LogOut,
-  ChevronLeft, ChevronRight, MessageCircle, Sparkles, Smartphone, PieChart, LineChart, ListTodo, ThumbsDown, Megaphone, Search, Layers, LifeBuoy,
+  ChevronLeft, ChevronRight, MessageCircle, Sparkles, Smartphone, PieChart, LineChart, ListTodo, ThumbsDown, Megaphone, Search, Layers, LifeBuoy, Flag,
 } from "lucide-react";
 import { colors } from "../lib/theme";
 import { canActLikeManager, isRegularRep, canViewReports } from "../lib/permissions";
@@ -12,7 +12,7 @@ const ICONS = {
   dashboard: BarChart3, customers: Users, notifications: Bell, paymentDues: CreditCard, suppliers: Truck,
   calendar: CalendarDays, history: Archive, canceled: XCircle, settings: Settings, teamChat: MessageCircle,
   download: Smartphone, reports: PieChart, myReports: LineChart, tasks: ListTodo, notInterested: ThumbsDown,
-  home: Megaphone, ourSystems: Layers, supportTickets: LifeBuoy,
+  home: Megaphone, ourSystems: Layers, supportTickets: LifeBuoy, managerAlerts: Flag,
 };
 
 const GROUP_ACCENTS = {
@@ -34,6 +34,7 @@ function buildGroups(profile) {
     { title: "מכירה ותפעול", items: ["ops", "dashboard", !mgr && "myReports", "calendar", canViewReports(profile) && "reports"].filter(Boolean) },
     { title: "ניהול", items: [
       mgr && "notifications",
+      mgr && "managerAlerts",
       (mgr || isRegularRep(profile)) && "paymentDues",
       mgr && "suppliers",
       "customers",

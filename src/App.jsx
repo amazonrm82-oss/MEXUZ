@@ -44,6 +44,7 @@ import NotInterestedView from "./views/NotInterestedView";
 import AnnouncementsView from "./views/AnnouncementsView";
 import OurSystemsView from "./views/OurSystemsView";
 import SupportTicketsView from "./views/SupportTicketsView";
+import ManagerAlertsView from "./views/ManagerAlertsView";
 import CustomTabView from "./views/CustomTabView";
 import LeadDrawer from "./views/LeadDrawer";
 
@@ -53,7 +54,7 @@ const DEFAULT_NAV_LABELS = {
   suppliers: "ספקים וקבלני משנה", calendar: "יומן", history: "היסטוריה", canceled: "לידים שבוטלו", settings: "הגדרות",
   teamChat: "צ'אט צוות", download: "הורדה למכשיר", reports: "דוחות תקופתיים", myReports: "הדוח שלי",
   tasks: "משימות ותזכורות", notInterested: "לא מעוניינים", home: "לוח מודעות", ourSystems: "המערכות שלנו",
-  supportTickets: "פניות תמיכה",
+  supportTickets: "פניות תמיכה", managerAlerts: "התראות למנהל",
 };
 
 export default function App() {
@@ -182,6 +183,7 @@ function MainApp({ profile }) {
       const unclaimedNew = leads.filter((l) => !l.claimed_by && !l.canceled && !l.archived && !l.closed_at && Date.now() - new Date(l.received_at).getTime() > UNCLAIMED_ALERT_MS && new Date(l.received_at).getTime() > seenAt).length;
       const n = pendingNew + lateNew + unclaimedNew;
       if (n > 0) b.notifications = n;
+      if (unresolvedManagerNotes.length > 0) b.managerAlerts = unresolvedManagerNotes.length;
     }
 
     const chatSeenAt = lastSeenFor("teamChat");
@@ -195,7 +197,7 @@ function MainApp({ profile }) {
 
     return b;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leads, teamMessages, directMessages, tasks, profile, seenTick]);
+  }, [leads, teamMessages, directMessages, tasks, profile, seenTick, unresolvedManagerNotes]);
 
   function openLead(id) { setSelectedLeadId(id); }
   function closeDrawer() { setSelectedLeadId(null); }
@@ -206,7 +208,7 @@ function MainApp({ profile }) {
 
   const commonProps = {
     profile, profiles, leads, allLeads, catalog, actions, showToast, openLead, view, setView, online, tasks, t, tStatus,
-    googleCalendarEmbedUrl,
+    googleCalendarEmbedUrl, flaggedNotes,
   };
 
   return (
@@ -305,6 +307,7 @@ function ViewRouter(props) {
   if (view === "home") return <AnnouncementsView {...props} />;
   if (view === "ourSystems") return <OurSystemsView {...props} />;
   if (view === "supportTickets") return <SupportTicketsView {...props} />;
+  if (view === "managerAlerts") return <ManagerAlertsView {...props} />;
   if (view.startsWith("custom:")) {
     const tab = customTabs.find((t) => "custom:" + t.id === view);
     return <CustomTabView tab={tab} />;

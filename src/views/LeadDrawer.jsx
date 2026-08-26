@@ -32,6 +32,8 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
   const isClosed = !!lead.closed_at;
   const revenue = useMemo(() => orderLines.reduce((s, o) => s + Number(o.amount || 0), 0), [orderLines]);
   const hasPriceMismatch = useMemo(() => orderLines.some((o) => o.given_amount != null && Number(o.given_amount) !== Number(o.amount)), [orderLines]);
+  const regularNotes = useMemo(() => notes.filter((n) => !n.flagged_for_manager), [notes]);
+  const managerNotes = useMemo(() => notes.filter((n) => n.flagged_for_manager), [notes]);
 
   function repName(id) { return profiles.find((p) => p.id === id)?.name || "—"; }
 
@@ -162,37 +164,15 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
         )}
 
         <Section title={t("הערות")}>
-          {notes.map((n) => (
-            <div
-              key={n.id}
-              style={{
-                fontSize: 13, padding: "8px 10px", marginBottom: 6, borderRadius: 8,
-                background: n.flagged_for_manager && !n.resolved ? "#fef2f2" : "transparent",
-                border: n.flagged_for_manager && !n.resolved ? "1px solid #fecaca" : "none",
-                borderBottom: n.flagged_for_manager ? undefined : `1px solid ${colors.border}`,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
-                {n.flagged_for_manager && (
-                  n.resolved
-                    ? <CheckCircle2 size={15} color="#0ea5a5" style={{ flexShrink: 0, marginTop: 1 }} />
-                    : <Flag size={15} color="#dc2626" fill="#dc2626" style={{ flexShrink: 0, marginTop: 1 }} />
-                )}
-                <div style={{ flex: 1 }}>{n.text}</div>
-              </div>
-              <div style={{ color: colors.muted, fontSize: 11, marginTop: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>
-                  {fmtDate(n.created_at)}{n.follow_up ? ` · ${t("מעקב")}: ${n.follow_up}` : ""}
-                  {n.resolved ? ` · ${t("טופל")}` : ""}
-                </span>
-                {mgr && n.flagged_for_manager && !n.resolved && (
-                  <button onClick={() => resolveNote(n)} style={{ border: "none", background: "none", color: "#0ea5a5", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>
-                    {t("סמן כטופל")}
-                  </button>
-                )}
+          {regularNotes.map((n) => (
+            <div key={n.id} style={{ fontSize: 13, padding: "8px 10px", marginBottom: 6, borderRadius: 8, borderBottom: `1px solid ${colors.border}` }}>
+              <div>{n.text}</div>
+              <div style={{ color: colors.muted, fontSize: 11, marginTop: 3 }}>
+                {repName(n.author_id)} · {fmtDate(n.created_at)}{n.follow_up ? ` · ${t("מעקב")}: ${n.follow_up}` : ""}
               </div>
             </div>
           ))}
+          {regularNotes.length === 0 && <div style={{ fontSize: 12.5, color: colors.muted }}>{t("אין הערות עדיין")}</div>}
           {!readOnly && (
             <div style={{ marginTop: 8 }}>
               <textarea style={{ ...inputStyle, minHeight: 60, marginBottom: 6 }} placeholder={t("הערה חדשה…")} value={noteText} onChange={(e) => setNoteText(e.target.value)} />
@@ -205,6 +185,52 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
             </div>
           )}
         </Section>
+
+        {managerNotes.length > 0 && (
+          <Section title={t("התראות למנהל")}>
+            <div style={{ display: "grid", gap: 10 }}>
+              {managerNotes.map((n) => {
+                const isResolved = n.resolved;
+                return (
+                  <div
+                    key={n.id}
+                    style={{
+                      borderRadius: 12, padding: "12px 14px",
+                      background: isResolved ? "linear-gradient(135deg, #ecfdf9 0%, #f0fdfa 100%)" : "linear-gradient(135deg, #fef2f2 0%, #fff5f5 100%)",
+                      border: `1.5px solid ${isResolved ? "#99e6d8" : "#fca5a5"}`,
+                      boxShadow: isResolved ? "0 2px 8px rgba(14,165,165,.12)" : "0 2px 10px rgba(220,38,38,.15)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
+                      {isResolved
+                        ? <CheckCircle2 size={17} color="#0ea5a5" style={{ flexShrink: 0 }} />
+                        : <Flag size={17} color="#dc2626" fill="#dc2626" style={{ flexShrink: 0 }} />}
+                      <span style={{ fontSize: 11.5, fontWeight: 800, color: isResolved ? "#0ea5a5" : "#dc2626", letterSpacing: .2, textTransform: "uppercase" }}>
+                        {isResolved ? t("התראה טופלה") : t("התראה למנהל")}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 13.5, color: colors.text, marginBottom: 8, lineHeight: 1.4 }}>{n.text}</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, fontSize: 11, color: colors.muted }}>
+                      <span>{repName(n.author_id)} · {fmtDate(n.created_at)}</span>
+                      {isResolved ? (
+                        <span style={{ color: "#0ea5a5", fontWeight: 700 }}>
+                          ✓ {t('טופל ע"י')} {repName(n.resolved_by)} · {fmtDate(n.resolved_at)}
+                        </span>
+                      ) : mgr ? (
+                        <button
+                          onClick={() => resolveNote(n)}
+                          style={{ border: "none", background: "#dc2626", color: "#fff", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                        >
+                          ✓ {t("סמן כטופל")}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Section>
+        )}
 
         {!isClosed && !readOnly && !lead.canceled && (
           <Section title={t("סגירת עסקה")}>
