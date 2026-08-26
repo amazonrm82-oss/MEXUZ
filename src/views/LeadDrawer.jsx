@@ -89,6 +89,7 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
         )}
 
         <Section title={t("פרטי ליד")}>
+          {lead.email && <Row label={t("אימייל")} value={lead.email} />}
           <Row label={t("מוצר")} value={`${lead.product || "—"} · ${lead.quantity || 0} ${t("יח'")}`} />
           <Row label={t("ערוץ")} value={`${tStatus(lead.channel) || "—"}${lead.ad_name ? " · " + lead.ad_name : ""}`} />
           <Row label={t("כתובת")} value={lead.address || "—"} />

@@ -27,6 +27,9 @@
 3. **חשוב**: אחר כך פתח גם את `supabase/migrations/0002_company_systems.sql`, העתק את כל
    התוכן, הדבק ב-SQL Editor והרץ. זה מוסיף את לשונית "המערכות שלנו" (פורטפוליו המערכות
    שMEXUZ בנתה ומתחזקת ללקוחות, כולל ARIZOT ו-Machon Managers, עם ספירה חיה של כמה מהן פעילות).
+   ואז, באותה שיטה, בזה אחר זה: `0003_recurring_revenue.sql` (דמי תחזוקה חודשיים + תאריך
+   חידוש חוזה לכל מערכת), `0004_support_tickets.sql` (לשונית פניות תמיכה), ו-
+   `0005_lead_email.sql` (שדה אימייל ללידים — נדרש לפני חיבור דף הנחיתה, שלב 4 למטה).
 4. שני בלוקים בקובץ (`pull-google-calendar-changes` ו-`send-task-push`, דרך `cron.schedule`)
    מכילים placeholders בשם `YOUR_PROJECT_REF` ו-`PASTE_YOUR_SERVICE_ROLE_KEY_HERE` — אלה
    אופציונליים (ראה שלבים 2.5 ו-3 למטה). אם לא רוצים סנכרון Google או Push כרגע, אפשר פשוט
@@ -112,6 +115,30 @@ npm install
 npm run dev      # פיתוח מקומי
 npm run build    # בנייה לפריסה (Vercel / Netlify / כל שירות סטטי)
 ```
+
+## 7. חיבור לידים מדף הנחיתה (אופציונלי)
+
+יש שני Edge Functions ציבוריים לקליטת לידים אוטומטית, בלי שאף אחד יזין אותם ידנית:
+
+- `facebook-lead-webhook` — ללידים שמגיעים דרך Make.com מפייסבוק/אינסטגרם.
+- `website-lead-webhook` — ללידים שמגיעים מטופס "צור קשר"/"בקש הצעת מחיר" בדף הנחיתה
+  השיווקי. נפרד מה-webhook של פייסבוק כדי שיהיה לו secret משלו.
+
+לפריסה:
+
+```bash
+supabase secrets set WEBSITE_LEAD_WEBHOOK_SECRET=<בחר סוד ארוך ואקראי>
+supabase functions deploy website-lead-webhook --no-verify-jwt
+```
+
+הכתובת שדף הנחיתה צריך לשלוח אליה POST: `https://<project-ref>.supabase.co/functions/v1/website-lead-webhook`
+עם header בשם `x-webhook-secret` שערכו הסוד שהגדרת, וגוף JSON (`name` ו-`phone` חובה, כל
+השאר אופציונלי): `{"name","phone","email","business_name","product","quantity","message","city","country","channel"}`.
+
+**אזהרת אבטחה**: אם הטופס בדף הנחיתה שולח את הבקשה **ישירות מהדפדפן** (JavaScript בצד לקוח),
+ה-secret הזה גלוי לכל מי שיפתח את כלי המפתחים בדפדפן — הסיכון מוגבל (לכל היותר לידים
+מזויפים, אין גישה לנתונים אחרים), אבל אם אפשרי עדיף לנתב את הקריאה דרך שרת/פונקציה בצד
+דף הנחיתה עצמו במקום ישירות מהדפדפן.
 
 ## מה הותאם עבור MEXUZ (ולמה)
 

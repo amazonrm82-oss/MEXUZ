@@ -6,7 +6,7 @@ import { COUNTRIES } from "../lib/countries";
 import { inputStyle, buttonPrimary, panelStyle, colors } from "../lib/theme";
 import PageHeader from "../components/PageHeader";
 
-const EMPTY = { name: "", phone: "", businessName: "", contactRole: "", product: "", quantity: "", adName: "", channel: CHANNELS[0], address: "", city: "", country: "" };
+const EMPTY = { name: "", phone: "", email: "", businessName: "", contactRole: "", product: "", quantity: "", adName: "", channel: CHANNELS[0], address: "", city: "", country: "" };
 
 export default function AddLeadView({ catalog, leads, showToast, setView, t, tStatus }) {
   const [form, setForm] = useState(EMPTY);
@@ -29,7 +29,7 @@ export default function AddLeadView({ catalog, leads, showToast, setView, t, tSt
     }
     setSaving(true);
     const { error } = await supabase.from("leads").insert({
-      name: form.name.trim(), phone: form.phone.trim(), business_name: form.businessName.trim(),
+      name: form.name.trim(), phone: form.phone.trim(), email: form.email.trim() || null, business_name: form.businessName.trim(),
       contact_role: form.contactRole.trim(), product: form.product, quantity: Number(form.quantity) || 0,
       ad_name: form.adName.trim(), channel: form.channel, address: form.address.trim(), city: form.city.trim(),
       country: form.country.trim(), is_international: isUSCountryValue(form.country),
@@ -54,6 +54,7 @@ export default function AddLeadView({ catalog, leads, showToast, setView, t, tSt
             </div>
           )}
         </Field>
+        <Field label={t("אימייל")}><input type="email" style={inputStyle} value={form.email} onChange={(e) => set("email", e.target.value)} /></Field>
         <Field label={t("שם עסק *")}><input style={inputStyle} value={form.businessName} onChange={(e) => set("businessName", e.target.value)} /></Field>
         <Field label={t("תפקיד")}><input style={inputStyle} value={form.contactRole} onChange={(e) => set("contactRole", e.target.value)} /></Field>
         <Field label={t("מוצר")}>

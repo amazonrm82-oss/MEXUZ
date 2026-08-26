@@ -156,6 +156,7 @@ export const EN_TRANSLATIONS = {
   // LeadDrawer
   "פרטי ליד": "Lead Details",
   "מוצר": "Product",
+  "אימייל": "Email",
   "ערוץ": "Channel",
   "כתובת": "Address",
   "עיר": "City",
