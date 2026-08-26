@@ -121,6 +121,10 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
           <Row label={t("התקבל")} value={fmtDate(lead.received_at)} />
         </Section>
 
+        <Section title={t("אנשי קשר")}>
+          <ContactsList leadId={lead.id} readOnly={readOnly} showToast={showToast} t={t} />
+        </Section>
+
         {!readOnly && (
           <Section title={t("שיוך")}>
             {!lead.claimed_by ? (
@@ -382,6 +386,71 @@ function SupplierLinkMini({ leadId, showToast, t }) {
           <button type="submit" style={{ ...smallInput, background: colors.accent, color: "#fff", border: "none", cursor: "pointer" }}>{t("שייך")}</button>
           <button type="button" onClick={() => setOpen(false)} style={{ border: "none", background: "none", color: colors.muted, cursor: "pointer", fontSize: 11 }}>{t("ביטול")}</button>
         </form>
+      )}
+    </div>
+  );
+}
+
+const CONTACT_EMPTY = { name: "", role: "", phone: "", email: "" };
+
+function ContactsList({ leadId, readOnly, showToast, t }) {
+  const { rows: contacts } = useRealtimeList("lead_contacts", { filterColumn: "lead_id", filterValue: leadId, orderBy: "created_at", ascending: true });
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState(CONTACT_EMPTY);
+
+  async function addContact(e) {
+    e.preventDefault();
+    if (!form.name.trim()) { showToast(t("יש להזין שם")); return; }
+    const { error } = await supabase.from("lead_contacts").insert({
+      lead_id: leadId, name: form.name.trim(), role: form.role.trim() || null,
+      phone: form.phone.trim() || null, email: form.email.trim() || null,
+    });
+    if (error) { showToast(t("שגיאה בהוספת איש קשר")); return; }
+    setForm(CONTACT_EMPTY);
+    setOpen(false);
+    showToast(t("איש הקשר נוסף"));
+  }
+
+  async function removeContact(id) {
+    await supabase.from("lead_contacts").delete().eq("id", id);
+  }
+
+  const smallInput = { fontSize: 11, padding: "3px 5px", borderRadius: 5, border: `1px solid ${colors.border}` };
+
+  return (
+    <div>
+      {contacts.length === 0 && <div style={{ fontSize: 12.5, color: colors.muted }}>{t("אין עדיין אנשי קשר נוספים")}</div>}
+      {contacts.length > 0 && (
+        <div style={{ display: "grid", gap: 6, marginBottom: 6 }}>
+          {contacts.map((c) => (
+            <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5 }}>
+              <span>
+                <b>{c.name}</b>{c.role ? ` · ${c.role}` : ""}{c.phone ? ` · ${c.phone}` : ""}{c.email ? ` · ${c.email}` : ""}
+              </span>
+              {!readOnly && (
+                <button onClick={() => removeContact(c.id)} style={{ border: "none", background: "none", color: colors.muted, cursor: "pointer" }}>
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {!readOnly && (
+        !open ? (
+          <button onClick={() => setOpen(true)} style={{ border: "none", background: "none", color: colors.muted, fontSize: 11, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+            + {t("הוסף איש קשר")}
+          </button>
+        ) : (
+          <form onSubmit={addContact} style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
+            <input placeholder={t("שם")} style={{ ...smallInput, width: 90 }} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
+            <input placeholder={t("תפקיד")} style={{ ...smallInput, width: 90 }} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} />
+            <input placeholder={t("טלפון")} style={{ ...smallInput, width: 90 }} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <input placeholder={t("אימייל")} style={{ ...smallInput, width: 110 }} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <button type="submit" style={{ ...smallInput, background: colors.accent, color: "#fff", border: "none", cursor: "pointer" }}>{t("שמור")}</button>
+            <button type="button" onClick={() => setOpen(false)} style={{ border: "none", background: "none", color: colors.muted, cursor: "pointer", fontSize: 11 }}>{t("ביטול")}</button>
+          </form>
+        )
       )}
     </div>
   );
