@@ -251,6 +251,11 @@ export default function Sidebar({ profile, profiles, online, badges, view, setVi
           <LogOut size={17} />
           {sidebarOpen && <span>{t("יציאה")}</span>}
         </button>
+        {sidebarOpen && (
+          <div style={{ fontSize: 10, color: colors.muted, textAlign: "center", padding: "6px 8px 2px" }}>
+            © {new Date().getFullYear()} MEXUZ. {t("כל הזכויות שמורות")}.
+          </div>
+        )}
       </div>
     </div>
   );

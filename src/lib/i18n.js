@@ -40,6 +40,7 @@ export const EN_TRANSLATIONS = {
   "מחוברים": "online",
   "חיפוש ליד…": "Search lead…",
   "יציאה": "Log out",
+  "כל הזכויות שמורות": "All rights reserved",
 
   // Common buttons/words
   "הכל": "All",

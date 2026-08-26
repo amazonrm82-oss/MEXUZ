@@ -27,7 +27,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: colors.bg, fontFamily: "sans-serif", padding: 16 }}>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, background: colors.bg, fontFamily: "sans-serif", padding: 16 }}>
       <form onSubmit={handleSubmit} style={{ background: "#fff", padding: 32, borderRadius: 16, width: 320, maxWidth: "100%", boxShadow: "0 4px 20px rgba(0,0,0,.08)" }}>
         <div style={{ fontSize: 26, fontWeight: 800, textAlign: "center", marginBottom: 4 }}>MEXUZ</div>
         <div style={{ fontSize: 13, color: colors.muted, textAlign: "center", marginBottom: 20 }}>{t("CRM - מערכת לידים")}</div>
@@ -48,6 +48,9 @@ export default function LoginScreen() {
           {submitting ? t("מתחבר…") : t("כניסה")}
         </button>
       </form>
+      <div style={{ fontSize: 11.5, color: colors.muted, textAlign: "center" }}>
+        © {new Date().getFullYear()} MEXUZ. {t("כל הזכויות שמורות")}.
+      </div>
     </div>
   );
 }
