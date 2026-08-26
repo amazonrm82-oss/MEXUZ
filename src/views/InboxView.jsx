@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from "react";
-import { Inbox, Flame } from "lucide-react";
-import { colors, buttonPrimary, buttonGhost, inputStyle } from "../lib/theme";
+import { Inbox, Flame, Trash2 } from "lucide-react";
+import { supabase } from "../lib/supabaseClient";
+import { colors, buttonPrimary, buttonGhost, buttonDanger, inputStyle } from "../lib/theme";
 import { fmtDate } from "../lib/format";
 import { PROCESS_STATUS_OPTIONS, UNCLAIMED_ALERT_MS } from "../lib/constants";
 import { LEAD_STATUS_COLORS, PROCESS_STATUS_COLORS, colorFor } from "../lib/statusColors";
-import { canActLikeManager } from "../lib/permissions";
+import { canActLikeManager, canResetSystem } from "../lib/permissions";
 import { downloadCsv } from "../lib/exportCsv";
 import PageHeader from "../components/PageHeader";
 import EmptyState from "../components/EmptyState";
@@ -20,8 +21,28 @@ const ALL_SECTIONS = [...BOARD_STATUSES, PENDING_APPROVAL_STATUS];
 
 export default function InboxView({ leads, profile, profiles, openLead, actions, showToast, t, tStatus }) {
   const mgr = canActLikeManager(profile);
+  const canDelete = canResetSystem(profile);
   const [filter, setFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+
+  function toggleSelected(id) {
+    setSelectedIds((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  async function deleteSelected() {
+    const count = selectedIds.size;
+    if (!count) return;
+    if (!window.confirm(`${t("למחוק")} ${count} ${t("לידים נבחרים")}? ${t("הפעולה בלתי הפיכה.")}`)) return;
+    const { error } = await supabase.from("leads").delete().in("id", [...selectedIds]);
+    if (error) { showToast(t("שגיאה במחיקת הלידים")); return; }
+    showToast(`${count} ${t("לידים נמחקו")}`);
+    setSelectedIds(new Set());
+  }
 
   const open = useMemo(
     () => leads.filter((l) => !l.canceled && !l.archived && !l.closed_at && l.process_status !== "לא מעוניין"),
@@ -71,6 +92,11 @@ export default function InboxView({ leads, profile, profiles, openLead, actions,
             <button key={key} onClick={() => setFilter(key)} style={filter === key ? buttonPrimary : buttonGhost}>{t(label)}</button>
           )),
           <button key="export" onClick={exportLeads} style={buttonGhost}>{t("ייצוא לאקסל")}</button>,
+          ...(canDelete && selectedIds.size > 0 ? [
+            <button key="delete-selected" onClick={deleteSelected} style={{ ...buttonDanger, display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <Trash2 size={14} /> {t("מחק")} ({selectedIds.size})
+            </button>,
+          ] : []),
         ]}
       />
 
@@ -127,6 +153,14 @@ export default function InboxView({ leads, profile, profiles, openLead, actions,
                         >
                           <div onClick={() => openLead(l.id)} style={{ cursor: "pointer" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              {canDelete && (
+                                <input
+                                  type="checkbox" checked={selectedIds.has(l.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={() => toggleSelected(l.id)}
+                                  style={{ flexShrink: 0, cursor: "pointer" }}
+                                />
+                              )}
                               {l.is_hot && (
                                 <span title={t("ליד חם — מערכת CRM/ERP מעל 50 משתמשים")} style={{ display: "flex", flexShrink: 0 }}>
                                   <Flame size={13} color="#e6641f" fill="#e6641f" />
