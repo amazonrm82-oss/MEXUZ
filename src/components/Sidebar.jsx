@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import {
   Inbox, Briefcase, UserPlus, Calculator, Upload, Factory, CalendarDays,
   BarChart3, Users, Bell, CreditCard, Truck, Archive, XCircle, Settings, FileText, LogOut,
-  ChevronLeft, ChevronRight, MessageCircle, Sparkles, Smartphone, PieChart, LineChart, ListTodo, ThumbsDown, Megaphone, Search,
+  ChevronLeft, ChevronRight, MessageCircle, Sparkles, Smartphone, PieChart, LineChart, ListTodo, ThumbsDown, Megaphone, Search, Layers,
 } from "lucide-react";
 import { colors } from "../lib/theme";
 import { canActLikeManager, isRegularRep, canViewReports } from "../lib/permissions";
@@ -12,7 +12,7 @@ const ICONS = {
   dashboard: BarChart3, customers: Users, notifications: Bell, paymentDues: CreditCard, suppliers: Truck,
   calendar: CalendarDays, history: Archive, canceled: XCircle, settings: Settings, teamChat: MessageCircle,
   download: Smartphone, reports: PieChart, myReports: LineChart, tasks: ListTodo, notInterested: ThumbsDown,
-  home: Megaphone,
+  home: Megaphone, ourSystems: Layers,
 };
 
 const GROUP_ACCENTS = {
@@ -22,7 +22,7 @@ const GROUP_ACCENTS = {
 function buildGroups(profile) {
   const mgr = canActLikeManager(profile);
   const groups = [
-    { title: "בית", items: ["home"] },
+    { title: "בית", items: ["home", "ourSystems"] },
     { title: "לידים", items: [
       "inbox",
       "notInterested",

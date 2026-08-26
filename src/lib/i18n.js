@@ -42,6 +42,19 @@ export const EN_TRANSLATIONS = {
   "יציאה": "Log out",
   "כל הזכויות שמורות": "All rights reserved",
 
+  // Our Systems (company portfolio)
+  "המערכות שלנו": "Our Systems",
+  "מערכות פעילות": "active systems",
+  "מערכת חדשה": "New system",
+  "שם המערכת": "System name",
+  "שם הלקוח": "Client name",
+  "קישור (אופציונלי)": "Link (optional)",
+  "תיאור קצר": "Short description",
+  "בתחזוקה": "Maintenance",
+  "לא פעיל": "Inactive",
+  "אין עדיין מערכות ברשימה": "No systems listed yet",
+  "פתיחה": "Open",
+
   // Common buttons/words
   "הכל": "All",
   "חדש": "New",

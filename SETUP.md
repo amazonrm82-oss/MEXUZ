@@ -24,7 +24,10 @@
    (כולל סנכרון Google אופציונלי), התראות Push, לוג פעילות, נעילת התחברויות, ונתוני קטלוג
    ברירת מחדל (סוגי המערכות שMEXUZ מוכרת, רמות שירות, תוספות, פריסה והטמעה, רשימת ספקים/קבלני
    משנה). **לא** נוצרים משתמשים — זו התחלה נקייה.
-3. שני בלוקים בקובץ (`pull-google-calendar-changes` ו-`send-task-push`, דרך `cron.schedule`)
+3. **חשוב**: אחר כך פתח גם את `supabase/migrations/0002_company_systems.sql`, העתק את כל
+   התוכן, הדבק ב-SQL Editor והרץ. זה מוסיף את לשונית "המערכות שלנו" (פורטפוליו המערכות
+   שMEXUZ בנתה ומתחזקת ללקוחות, כולל ARIZOT ו-Machon Managers, עם ספירה חיה של כמה מהן פעילות).
+4. שני בלוקים בקובץ (`pull-google-calendar-changes` ו-`send-task-push`, דרך `cron.schedule`)
    מכילים placeholders בשם `YOUR_PROJECT_REF` ו-`PASTE_YOUR_SERVICE_ROLE_KEY_HERE` — אלה
    אופציונליים (ראה שלבים 2.5 ו-3 למטה). אם לא רוצים סנכרון Google או Push כרגע, אפשר פשוט
    להריץ את הקובץ כמות שהוא — שני ה-cron jobs יקראו לפונקציות שעוד לא נפרסו וייכשלו בשקט, בלי
