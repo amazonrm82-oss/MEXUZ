@@ -49,7 +49,10 @@ function calendarMessagesFor(t) {
   };
 }
 
-export default function CalendarView({ profile, profiles, leads, showToast, openLead, googleCalendarEmbedUrl }) {
+export default function CalendarView({
+  profile, profiles, leads, showToast, openLead, googleCalendarEmbedUrl,
+  presetLeadId = null, presetTitle = "", calendarHeight = 720,
+}) {
   const { t, lang } = useLanguage();
   const { rows: appointments } = useRealtimeList("appointments", { orderBy: "date_time", ascending: true });
   const mgr = canActLikeManager(profile);
@@ -97,12 +100,13 @@ export default function CalendarView({ profile, profiles, leads, showToast, open
 
   function eventPropGetter(event) {
     const appt = event.resource;
+    const isThisLead = !!presetLeadId && appt.lead_id === presetLeadId;
     const mine = appt.created_by === profile.id;
     const editable = canEdit(appt);
     return {
       style: {
-        backgroundColor: mine ? colors.accent : editable ? "#7c3aed" : "#a89a82",
-        border: "none", borderRadius: 6, opacity: editable ? 1 : 0.75,
+        backgroundColor: isThisLead ? "#d97706" : mine ? colors.accent : editable ? "#7c3aed" : "#a89a82",
+        border: isThisLead ? "2px solid #b45309" : "none", borderRadius: 6, opacity: editable ? 1 : 0.75,
         cursor: editable ? "grab" : "pointer",
       },
     };
@@ -110,11 +114,12 @@ export default function CalendarView({ profile, profiles, leads, showToast, open
 
   const calendarComponents = useMemo(() => ({ toolbar: CalendarToolbar, event: EventChip }), []);
   const calendarMessages = useMemo(() => calendarMessagesFor(t), [t]);
+  const fillHeight = calendarHeight === "100%";
 
   return (
-    <div>
+    <div style={fillHeight ? { height: "100%", display: "flex", flexDirection: "column" } : undefined}>
       {googleCalendarEmbedUrl && (
-        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 14, flexShrink: 0 }}>
           <button onClick={() => setMode("system")} style={mode === "system" ? buttonPrimary : buttonGhost}>{t("יומן המערכת")}</button>
           <button onClick={() => setMode("google")} style={mode === "google" ? buttonPrimary : buttonGhost}>{t("יומן Google")}</button>
         </div>
@@ -129,7 +134,7 @@ export default function CalendarView({ profile, profiles, leads, showToast, open
           />
         </div>
       ) : (
-    <div className="two-col-responsive" style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+    <div className="two-col-responsive" style={{ display: "flex", gap: 16, alignItems: "flex-start", flex: fillHeight ? 1 : undefined, minHeight: fillHeight ? 0 : undefined }}>
       <div style={{ width: 230, flexShrink: 0, display: "grid", gap: 14 }}>
         <button
           onClick={() => setModal({ mode: "create", start: roundToNextHalfHour(new Date()), appt: null })}
@@ -154,13 +159,18 @@ export default function CalendarView({ profile, profiles, leads, showToast, open
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
             <span style={{ width: 10, height: 10, borderRadius: 3, background: "#7c3aed", flexShrink: 0 }} /> {t("ניתן לעריכה")}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: presetLeadId ? 6 : 0 }}>
             <span style={{ width: 10, height: 10, borderRadius: 3, background: "#a89a82", flexShrink: 0 }} /> {t("לצפייה בלבד")}
           </div>
+          {presetLeadId && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 3, background: "#d97706", flexShrink: 0 }} /> {t("פגישות של ליד זה")}
+            </div>
+          )}
         </div>
       </div>
 
-      <div style={{ flex: 1, minWidth: 0, background: "#fff", borderRadius: 14, padding: 16, boxShadow: "0 2px 10px rgba(0,0,0,.06)", height: 720 }}>
+      <div style={{ flex: 1, minWidth: 0, background: "#fff", borderRadius: 14, padding: 16, boxShadow: "0 2px 10px rgba(0,0,0,.06)", height: calendarHeight }}>
         <DnDCalendar
           localizer={localizer}
           culture={lang === "en" ? "en-US" : "he"}
@@ -195,6 +205,8 @@ export default function CalendarView({ profile, profiles, leads, showToast, open
           showToast={showToast}
           openLead={openLead}
           onClose={() => setModal(null)}
+          presetLeadId={presetLeadId}
+          presetTitle={presetTitle}
           t={t}
           lang={lang}
         />
@@ -205,12 +217,12 @@ export default function CalendarView({ profile, profiles, leads, showToast, open
   );
 }
 
-function AppointmentModal({ modal, profile, leads, repName, canEdit, checkConflict, showToast, openLead, onClose, t, lang }) {
+function AppointmentModal({ modal, profile, leads, repName, canEdit, checkConflict, showToast, openLead, onClose, presetLeadId, presetTitle, t, lang }) {
   const { mode, start, appt } = modal;
-  const [title, setTitle] = useState(appt?.title || "");
+  const [title, setTitle] = useState(appt?.title || presetTitle || "");
   const [dateTime, setDateTime] = useState(toLocalInput(appt ? new Date(appt.date_time) : start));
   const [notes, setNotes] = useState(appt?.notes || "");
-  const [leadId, setLeadId] = useState(appt?.lead_id || "");
+  const [leadId, setLeadId] = useState(appt?.lead_id || presetLeadId || "");
   const [busy, setBusy] = useState(false);
 
   function toLocalInput(d) {

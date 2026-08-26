@@ -246,6 +246,8 @@ function MainApp({ profile }) {
           lead={selectedLead}
           profile={profile}
           profiles={profiles}
+          leads={leads}
+          openLead={openLead}
           catalog={catalog}
           actions={actions}
           showToast={showToast}

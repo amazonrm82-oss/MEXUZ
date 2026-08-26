@@ -184,6 +184,7 @@ export const EN_TRANSLATIONS = {
   "היסטוריית התראות שטופלו": "History of handled alerts",
   "אין עדיין התראות שטופלו": "No handled alerts yet",
   "ליד לא זמין": "Lead unavailable",
+  "פגישות של ליד זה": "Appointments for this lead",
   'הליד הועבר ל"לא מעוניינים"': 'Lead moved to "Not Interested"',
   "אין לידים בשלב הזה": "No leads at this stage",
   "ממתין לאישור מאז": "Awaiting approval since",
@@ -705,8 +706,6 @@ export const EN_TRANSLATIONS = {
   // AppointmentPickerModal
   "פגישה עם": "Meeting with",
   "קביעת פגישה עבור": "Schedule appointment for",
-  "לחץ על משבצת פנויה כדי לקבוע פגישה חדשה, גרור פגישה קיימת שלך כדי להזיז אותה, או פתח אותה ללחיצה כדי לערוך תאריך/שעה ידנית.":
-    "Click an open slot to schedule a new appointment, drag one of your own appointments to move it, or click one to edit its date/time manually.",
   "נבחר": "Selected",
   "לא נבחר זמן": "No time selected",
   "קובע…": "Scheduling…",

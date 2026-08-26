@@ -9,7 +9,7 @@ import { useRealtimeList } from "../lib/useTable";
 import DealItemCalculator from "../components/DealItemCalculator";
 import AppointmentPickerModal from "../components/AppointmentPickerModal";
 
-export default function LeadDrawer({ lead, profile, profiles, catalog, actions, showToast, onClose, readOnly, t, tStatus }) {
+export default function LeadDrawer({ lead, profile, profiles, leads, openLead, catalog, actions, showToast, onClose, readOnly, t, tStatus }) {
   const mgr = canActLikeManager(profile);
   const canDelete = canResetSystem(profile);
   const { rows: notes } = useRealtimeList("lead_notes", { filterColumn: "lead_id", filterValue: lead.id, orderBy: "created_at", ascending: true });
@@ -353,7 +353,7 @@ export default function LeadDrawer({ lead, profile, profiles, catalog, actions, 
       </div>
 
       {showApptPicker && (
-        <AppointmentPickerModal lead={lead} profile={profile} showToast={showToast} onClose={() => setShowApptPicker(false)} />
+        <AppointmentPickerModal lead={lead} profile={profile} profiles={profiles} leads={leads} showToast={showToast} openLead={openLead} onClose={() => setShowApptPicker(false)} />
       )}
     </div>
   );
