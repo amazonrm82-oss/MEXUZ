@@ -66,8 +66,6 @@ input:focus, select:focus, textarea:focus {
   .mobile-menu-btn {
     display: flex !important;
     position: fixed;
-    top: 14px;
-    inset-inline-end: 14px;
     z-index: 920;
   }
 

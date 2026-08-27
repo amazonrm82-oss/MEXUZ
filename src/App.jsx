@@ -10,7 +10,6 @@ import { useTaskAlerts } from "./lib/useTaskAlerts";
 import { useIdleLogout } from "./lib/useIdleLogout";
 import { canActLikeManager, isLeadVisibleForUser } from "./lib/permissions";
 import { TWO_WEEKS_MS, UNCLAIMED_ALERT_MS } from "./lib/constants";
-import { Menu } from "lucide-react";
 import LoginScreen from "./components/LoginScreen";
 import MfaChallengeScreen from "./components/MfaChallengeScreen";
 import Sidebar from "./components/Sidebar";
@@ -18,6 +17,7 @@ import Toast from "./components/Toast";
 import NewTasksModal from "./components/NewTasksModal";
 import FollowUpPopup from "./components/FollowUpPopup";
 import ManagerNotesModal from "./components/ManagerNotesModal";
+import FloatingMenuButton from "./components/FloatingMenuButton";
 import { colors } from "./lib/theme";
 
 import InboxView from "./views/InboxView";
@@ -213,16 +213,7 @@ function MainApp({ profile }) {
 
   return (
     <div className="app-shell" style={{ display: "flex", minHeight: "100vh", background: colors.bg, fontFamily: "sans-serif", color: colors.text }}>
-      <button
-        className="mobile-menu-btn"
-        onClick={() => setSidebarOpen(true)}
-        style={{
-          alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: "50%",
-          border: "none", background: colors.header, color: "#fff", cursor: "pointer", boxShadow: "0 2px 10px rgba(0,0,0,.2)",
-        }}
-      >
-        <Menu size={20} />
-      </button>
+      <FloatingMenuButton onClick={() => setSidebarOpen(true)} />
 
       <div
         className={`sidebar-backdrop ${sidebarOpen ? "sidebar-backdrop-visible" : ""}`}
