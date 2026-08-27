@@ -6,6 +6,7 @@ import { fmtDate, waPhoneFor, money } from "../lib/format";
 import { LEAD_STATUS_BASE, PROCESS_STATUS_OPTIONS, OPS_STATUS_OPTIONS, REMIND_BEFORE_OPTIONS } from "../lib/constants";
 import { canActLikeManager, canResetSystem } from "../lib/permissions";
 import { useRealtimeList } from "../lib/useTable";
+import { getSignedUrl } from "../lib/signedStorageUrl";
 import DealItemCalculator from "../components/DealItemCalculator";
 import AppointmentPickerModal from "../components/AppointmentPickerModal";
 
@@ -527,9 +528,10 @@ function LeadFiles({ lead, files, profile, mgr, readOnly, showToast, t }) {
     const path = `${lead.id}/${Date.now()}-${file.name}`;
     const { error: upErr } = await supabase.storage.from("lead-files").upload(path, file);
     if (upErr) { setUploading(false); showToast(t("שגיאה בהעלאת הקובץ")); return; }
-    const { data } = supabase.storage.from("lead-files").getPublicUrl(path);
+    // "url" holds the private bucket's object path, not a public link — a signed URL is
+    // generated on demand (openFile) each time the file is opened.
     const { error } = await supabase.from("lead_files").insert({
-      lead_id: lead.id, name: file.name, file_type: file.type, url: data.publicUrl, uploaded_by: profile.id,
+      lead_id: lead.id, name: file.name, file_type: file.type, url: path, uploaded_by: profile.id,
     });
     setUploading(false);
     if (error) { showToast(t("שגיאה בשמירת הקובץ")); return; }
@@ -538,6 +540,12 @@ function LeadFiles({ lead, files, profile, mgr, readOnly, showToast, t }) {
 
   async function remove(f) {
     await supabase.from("lead_files").delete().eq("id", f.id);
+  }
+
+  async function openFile(f) {
+    const signedUrl = await getSignedUrl("lead-files", f.url);
+    if (!signedUrl) { showToast(t("שגיאה בפתיחת הקובץ")); return; }
+    window.open(signedUrl, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -549,9 +557,12 @@ function LeadFiles({ lead, files, profile, mgr, readOnly, showToast, t }) {
           {files.map((f) => (
             <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
               <FileText size={14} color={colors.muted} style={{ flexShrink: 0 }} />
-              <a href={f.url} target="_blank" rel="noreferrer" style={{ color: colors.accent, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <button
+                onClick={() => openFile(f)}
+                style={{ border: "none", background: "none", padding: 0, cursor: "pointer", color: colors.accent, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "start" }}
+              >
                 {f.name}
-              </a>
+              </button>
               {(f.uploaded_by === profile.id || mgr) && !readOnly && (
                 <button onClick={() => remove(f)} style={{ border: "none", background: "none", color: colors.muted, cursor: "pointer", flexShrink: 0 }}>
                   <Trash2 size={14} />

@@ -46,15 +46,18 @@ export function AuthProvider({ children }) {
       return { error: `${t("יותר מדי ניסיונות כושלים. נסי שוב בעוד")} ${unit}.` };
     }
 
+    // Same generic error either way — a distinct "username not found" message would let anyone
+    // probe which usernames exist in the system before even trying a password.
+    const invalidCreds = t("שם משתמש או סיסמה שגויים");
     const { data: email, error: lookupErr } = await supabase.rpc("email_for_username", { p_username: username });
     if (lookupErr || !email) {
       await supabase.rpc("record_login_failure", { p_username: username });
-      return { error: t("שם משתמש לא נמצא") };
+      return { error: invalidCreds };
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       await supabase.rpc("record_login_failure", { p_username: username });
-      return { error: t("סיסמה שגויה") };
+      return { error: invalidCreds };
     }
     await supabase.rpc("record_login_success", { p_username: username });
     return { error: null };

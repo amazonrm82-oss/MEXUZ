@@ -24,6 +24,19 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// A plain !== leaks a few nanoseconds of extra comparison time per matching character prefix,
+// enough in theory for a remote timing attack against a long-lived shared secret. Same length
+// check up front (like Node's crypto.timingSafeEqual) then constant-time byte comparison.
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+const RATE_LIMIT_MAX = 30;
+const RATE_LIMIT_WINDOW_SECONDS = 600;
+
 // Mirrors src/lib/constants.js's isUSCountryValue() so a lead imported here without an explicit
 // is_international flag routes to the same rep pool (regular vs. overseas) as one entered by hand.
 const US_STATES_HE = [
@@ -65,8 +78,19 @@ Deno.serve(async (req) => {
   }
 
   const secret = req.headers.get("x-webhook-secret") || "";
-  if (!secret || secret !== Deno.env.get("LEAD_WEBHOOK_SECRET")) {
+  const expected = Deno.env.get("LEAD_WEBHOOK_SECRET") || "";
+  if (!secret || !expected || !timingSafeEqual(secret, expected)) {
     return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: corsHeaders });
+  }
+
+  const admin = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+
+  const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
+  const { data: allowed } = await admin.rpc("check_webhook_rate_limit", {
+    p_bucket_key: `facebook-lead-webhook:${ip}`, p_max_requests: RATE_LIMIT_MAX, p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
+  });
+  if (allowed === false) {
+    return new Response(JSON.stringify({ error: "too many requests" }), { status: 429, headers: corsHeaders });
   }
 
   const body = await req.json().catch(() => ({}));
@@ -75,8 +99,6 @@ Deno.serve(async (req) => {
   if (!name || !phone) {
     return new Response(JSON.stringify({ error: "name and phone are required" }), { status: 400, headers: corsHeaders });
   }
-
-  const admin = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 
   const phoneDigits = digitsOnly(phone);
   const { data: existing } = await admin.from("leads").select("phone");

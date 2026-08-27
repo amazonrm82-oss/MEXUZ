@@ -7,6 +7,7 @@ import { fmtDate } from "../lib/format";
 import { canActLikeManager } from "../lib/permissions";
 import { EMOJIS } from "../lib/emojis";
 import { useLanguage } from "../lib/LanguageContext";
+import { useSignedUrl } from "../lib/signedStorageUrl";
 
 const EDIT_WINDOW_MS = 5 * 60 * 1000;
 const DELETE_WINDOW_MS = 10 * 60 * 1000;
@@ -106,10 +107,11 @@ export default function TeamChatView({ profile, profiles, online }) {
     const path = `${conversationKey}/${Date.now()}-${file.name}`;
     const { error: upErr } = await supabase.storage.from("chat-attachments").upload(path, file);
     if (upErr) { alert(t("שגיאה בהעלאת הקובץ")); return; }
-    const { data } = supabase.storage.from("chat-attachments").getPublicUrl(path);
+    // attachment_url holds the private bucket's object path, not a public link — ChatAttachment
+    // resolves it to a short-lived signed URL whenever the message renders.
     const base = {
       sender_id: profile.id, text: text.trim(),
-      attachment_url: data.publicUrl, attachment_name: file.name, attachment_type: file.type,
+      attachment_url: path, attachment_name: file.name, attachment_type: file.type,
     };
     if (table === "direct_messages") base.recipient_id = target;
     await supabase.from(table).insert(base);
@@ -174,15 +176,9 @@ export default function TeamChatView({ profile, profiles, online }) {
                   ) : (
                     <>
                       {m.text && <div style={{ fontSize: 13.5, whiteSpace: "pre-wrap" }}>{m.text}</div>}
-                      {m.attachment_url && (isImage ? (
-                        <a href={m.attachment_url} target="_blank" rel="noreferrer">
-                          <img src={m.attachment_url} alt={m.attachment_name} style={{ maxWidth: 220, maxHeight: 220, borderRadius: 8, marginTop: 4, display: "block" }} />
-                        </a>
-                      ) : (
-                        <a href={m.attachment_url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4, color: "inherit", fontSize: 12.5 }}>
-                          <Paperclip size={13} /> {m.attachment_name}
-                        </a>
-                      ))}
+                      {m.attachment_url && (
+                        <ChatAttachment path={m.attachment_url} name={m.attachment_name} isImage={isImage} />
+                      )}
                     </>
                   )}
 
@@ -231,5 +227,31 @@ export default function TeamChatView({ profile, profiles, online }) {
         </div>
       </div>
     </div>
+  );
+}
+
+// chat-attachments is a private bucket — the stored path only resolves through a short-lived
+// signed URL, fetched per-message here (images load it eagerly so they still appear inline;
+// other files just link out once the URL comes back).
+function ChatAttachment({ path, name, isImage }) {
+  const url = useSignedUrl("chat-attachments", path);
+  if (isImage) {
+    return url ? (
+      <a href={url} target="_blank" rel="noreferrer">
+        <img src={url} alt={name} style={{ maxWidth: 220, maxHeight: 220, borderRadius: 8, marginTop: 4, display: "block" }} />
+      </a>
+    ) : (
+      <div style={{ fontSize: 12, opacity: .7, marginTop: 4 }}>{name}</div>
+    );
+  }
+  return (
+    <a
+      href={url || "#"}
+      onClick={(e) => { if (!url) e.preventDefault(); }}
+      target="_blank" rel="noreferrer"
+      style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4, color: "inherit", fontSize: 12.5 }}
+    >
+      <Paperclip size={13} /> {name}
+    </a>
   );
 }

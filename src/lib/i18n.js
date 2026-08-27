@@ -118,8 +118,7 @@ export const EN_TRANSLATIONS = {
   "שעות": "hours",
   "דקות": "minutes",
   "יותר מדי ניסיונות כושלים. נסי שוב בעוד": "Too many failed attempts. Try again in",
-  "שם משתמש לא נמצא": "Username not found",
-  "סיסמה שגויה": "Incorrect password",
+  "שם משתמש או סיסמה שגויים": "Invalid username or password",
 
   // MFA
   "אימות דו-שלבי": "Two-factor authentication",
@@ -251,6 +250,7 @@ export const EN_TRANSLATIONS = {
   "שגיאה בהעלאת הקובץ": "Error uploading file",
   "שגיאה בשמירת הקובץ": "Error saving file",
   "הקובץ צורף": "File attached",
+  "שגיאה בפתיחת הקובץ": "Error opening file",
   "הוסף תזכורת / משימה": "Add reminder / task",
   "משימה": "Task",
   "תזכורת": "Reminder",
