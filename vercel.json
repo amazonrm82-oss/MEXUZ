@@ -1,4 +1,7 @@
 {
+  "rewrites": [
+    { "source": "/((?!assets/|icon\\.svg|manifest\\.webmanifest|sw\\.js|registerSW\\.js).*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
