@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ListTodo, BellRing, ClipboardList, Users, Trash2, Check } from "lucide-react";
+import { ListTodo, BellRing, ClipboardList, Users, Trash2, Check, Repeat, LayoutList } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { inputStyle, buttonPrimary, buttonGhost, colors, panelStyle } from "../lib/theme";
 import { REMIND_BEFORE_OPTIONS } from "../lib/constants";
@@ -12,6 +12,13 @@ const TABS = [
   ["myTasks", "המשימות שלי", ListTodo],
   ["reminders", "תזכורות שלי", BellRing],
   ["fromManager", "משימות מהמנהל", ClipboardList],
+];
+
+const REPEAT_OPTIONS = [
+  ["", "ללא חזרה"],
+  ["daily", "כל יום"],
+  ["weekly", "כל שבוע"],
+  ["monthly", "כל חודש"],
 ];
 
 function toLocalInput(d) {
@@ -28,7 +35,7 @@ function defaultDueInput() {
 export default function TasksView({ profile, profiles, tasks, showToast, openLead, t }) {
   const mgr = canActLikeManager(profile);
   const [tab, setTab] = useState("myTasks");
-  const tabs = mgr ? [...TABS, ["assign", "הקצאת משימות", Users]] : TABS;
+  const tabs = mgr ? [...TABS, ["assign", "הקצאת משימות", Users], ["team", "כל המשימות של הצוות", LayoutList]] : TABS;
 
   const myTasks = useMemo(() => tasks.filter((task) => task.kind === "task" && task.owner_id === profile.id && task.created_by === profile.id), [tasks, profile.id]);
   const myReminders = useMemo(() => tasks.filter((task) => task.kind === "reminder" && task.owner_id === profile.id), [tasks, profile.id]);
@@ -90,6 +97,53 @@ export default function TasksView({ profile, profiles, tasks, showToast, openLea
       {tab === "assign" && mgr && (
         <AssignTab profiles={profiles} profile={profile} assignedByMe={assignedByMe} showToast={showToast} onToggle={toggleComplete} onRemove={remove} openLead={openLead} t={t} />
       )}
+      {tab === "team" && mgr && (
+        <TeamOverviewTab tasks={tasks} profiles={profiles} openLead={openLead} t={t} />
+      )}
+    </div>
+  );
+}
+
+// Manager/deputy-only: every rep's own tasks and reminders (self-made or automated — see
+// migration 0013) grouped by rep, so a manager can actually see whether the team is keeping up
+// with follow-ups and stuck-lead nudges instead of only what they personally assigned.
+function TeamOverviewTab({ tasks, profiles, openLead, t }) {
+  const grouped = useMemo(() => {
+    const map = {};
+    tasks.filter((task) => !task.completed).forEach((task) => {
+      (map[task.owner_id] = map[task.owner_id] || []).push(task);
+    });
+    return map;
+  }, [tasks]);
+
+  const repIds = Object.keys(grouped).sort((a, b) => grouped[b].length - grouped[a].length);
+
+  if (repIds.length === 0) return <EmptyState icon={LayoutList} text={t("אין כרגע משימות או תזכורות פתוחות בצוות")} />;
+
+  return (
+    <div style={{ display: "grid", gap: 18 }}>
+      {repIds.map((repId) => {
+        const items = grouped[repId].sort((a, b) => new Date(a.due_at) - new Date(b.due_at));
+        const overdueCount = items.filter((task) => new Date(task.due_at).getTime() < Date.now()).length;
+        return (
+          <div key={repId}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: colors.text, marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
+              {profiles.find((p) => p.id === repId)?.name || "—"}
+              <span style={{ fontWeight: 500, color: colors.muted, fontSize: 11.5 }}>({items.length} {t("פתוחות")})</span>
+              {overdueCount > 0 && (
+                <span style={{ background: colors.danger, color: "#fff", borderRadius: 8, padding: "1px 8px", fontSize: 10.5, fontWeight: 700 }}>
+                  {overdueCount} {t("באיחור")}
+                </span>
+              )}
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              {items.map((task) => (
+                <TaskRow key={task.id} task={task} onToggle={() => {}} onRemove={null} canToggle={false} openLead={openLead} t={t} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -99,6 +153,7 @@ function TaskList({ items, kind, profile, showToast, onToggle, onRemove, emptyTe
   const [notes, setNotes] = useState("");
   const [due, setDue] = useState(defaultDueInput());
   const [remindBefore, setRemindBefore] = useState(60);
+  const [repeatInterval, setRepeatInterval] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function add() {
@@ -108,12 +163,13 @@ function TaskList({ items, kind, profile, showToast, onToggle, onRemove, emptyTe
       owner_id: ownerId || profile.id, created_by: profile.id, kind,
       title: title.trim(), notes: notes.trim() || null,
       due_at: new Date(due).toISOString(), remind_before_minutes: Number(remindBefore),
+      repeat_interval: repeatInterval || null,
       ...extraInsert,
     };
     const { error } = await supabase.from("tasks").insert(payload);
     setSaving(false);
     if (error) { showToast(t("שגיאה בהוספה")); return; }
-    setTitle(""); setNotes(""); setDue(defaultDueInput()); setRemindBefore(60);
+    setTitle(""); setNotes(""); setDue(defaultDueInput()); setRemindBefore(60); setRepeatInterval("");
     showToast(kind === "reminder" ? t("התזכורת נוספה") : t("המשימה נוספה"));
     if (onAdded) onAdded();
   }
@@ -131,6 +187,9 @@ function TaskList({ items, kind, profile, showToast, onToggle, onRemove, emptyTe
             <input type="datetime-local" style={{ ...inputStyle, flex: 1, minWidth: 180 }} value={due} onChange={(e) => setDue(e.target.value)} />
             <select style={{ ...inputStyle, flex: 1, minWidth: 150 }} value={remindBefore} onChange={(e) => setRemindBefore(e.target.value)}>
               {REMIND_BEFORE_OPTIONS.map(([mins, label]) => <option key={mins} value={mins}>{t(label)}</option>)}
+            </select>
+            <select style={{ ...inputStyle, flex: 1, minWidth: 150 }} value={repeatInterval} onChange={(e) => setRepeatInterval(e.target.value)}>
+              {REPEAT_OPTIONS.map(([val, label]) => <option key={val} value={val}>{t(label)}</option>)}
             </select>
           </div>
           <button onClick={add} disabled={saving} style={buttonPrimary}>{saving ? t("שומר…") : kind === "reminder" ? t("הוסף תזכורת") : t("הוסף משימה")}</button>
@@ -181,7 +240,12 @@ function TaskRow({ task, onToggle, onRemove, repName, showAssignedBy, canToggle,
         </button>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 14, textDecoration: task.completed ? "line-through" : "none" }}>{task.title}</div>
+        <div style={{ fontWeight: 700, fontSize: 14, textDecoration: task.completed ? "line-through" : "none", display: "flex", alignItems: "center", gap: 5 }}>
+          {task.title}
+          {task.repeat_interval && (
+            <span title={t("חוזר")} style={{ display: "inline-flex" }}><Repeat size={12} color={colors.muted} /></span>
+          )}
+        </div>
         {task.notes && <div style={{ fontSize: 12.5, color: colors.mutedText, marginTop: 2 }}>{task.notes}</div>}
         <div style={{ fontSize: 11.5, color: overdue ? colors.danger : colors.muted, marginTop: 4, fontWeight: overdue ? 700 : 500 }}>
           {overdue ? `${t("באיחור")} · ` : ""}{fmtDate(task.due_at)}
