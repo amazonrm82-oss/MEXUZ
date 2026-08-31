@@ -4,7 +4,7 @@ import { useRealtimeList } from "../lib/useTable";
 import { colors, panelStyle, buttonPrimary, buttonGhost } from "../lib/theme";
 import { useOrderLines } from "../lib/useOrderLines";
 import { money, fmtDate } from "../lib/format";
-import { TWO_WEEKS_MS, UNCLAIMED_ALERT_MS, STUCK_LEAD_MS } from "../lib/constants";
+import { TWO_WEEKS_MS, UNCLAIMED_ALERT_MS, STUCK_LEAD_MS, FIRST_RESPONSE_SLA_MS } from "../lib/constants";
 import { canActLikeManager } from "../lib/permissions";
 import PageHeader from "../components/PageHeader";
 
@@ -45,6 +45,10 @@ export default function NotificationsView({ leads, profile, openLead, actions, s
   const pending = useMemo(() => leads.filter((l) => l.pending_approval), [leads]);
   const late = useMemo(() => leads.filter((l) => l.owes_payment && l.unpaid_since && Date.now() - new Date(l.unpaid_since).getTime() > TWO_WEEKS_MS), [leads]);
   const unclaimed = useMemo(() => leads.filter((l) => !l.claimed_by && !l.canceled && !l.archived && !l.closed_at && Date.now() - new Date(l.received_at).getTime() > UNCLAIMED_ALERT_MS), [leads]);
+  const noFirstResponse = useMemo(() => leads.filter((l) =>
+    l.claimed_by && !l.canceled && !l.archived && !l.closed_at &&
+    l.process_status === "ליד ראשוני" && Date.now() - new Date(l.received_at).getTime() > FIRST_RESPONSE_SLA_MS
+  ), [leads]);
   const stuck = useMemo(() => leads.filter((l) =>
     l.claimed_by && !l.canceled && !l.archived && !l.closed_at && l.process_status !== "לא מעוניין" &&
     l.status_changed_at && Date.now() - new Date(l.status_changed_at).getTime() > STUCK_LEAD_MS
@@ -151,6 +155,16 @@ export default function NotificationsView({ leads, profile, openLead, actions, s
           </div>
         ))}
         {unclaimed.length === 0 && <Empty t={t} />}
+      </Block>
+
+      <Block title={`${t("לידים ללא מענה ראשוני מעל 4 שעות")} (${noFirstResponse.length})`}>
+        {noFirstResponse.map((l) => (
+          <div key={l.id} className="clickable-card" style={{ ...panelStyle, marginBottom: 8, cursor: "pointer", borderInlineStart: `4px solid ${colors.danger}` }} onClick={() => openLead(l.id)}>
+            <div style={{ fontWeight: 700, color: colors.danger }}>{l.name} · {l.business_name}</div>
+            <div style={{ fontSize: 12.5, color: colors.mutedText }}>{t("משויך אך עדיין ללא מענה ראשוני")} · {t("התקבל")} {fmtDate(l.received_at)}</div>
+          </div>
+        ))}
+        {noFirstResponse.length === 0 && <Empty t={t} />}
       </Block>
 
       <Block title={`${t("לידים תקועים מעל שבוע")} (${stuck.length})`}>

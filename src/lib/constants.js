@@ -12,6 +12,11 @@ export const TWO_WEEKS_MS = 14 * 24 * 3600 * 1000;
 export const MEETING_BUFFER_MS = 60 * 60 * 1000;
 export const UNCLAIMED_ALERT_MS = 72 * 3600 * 1000;
 export const STUCK_LEAD_MS = 7 * 24 * 3600 * 1000;
+// First-response SLA: a lead someone already claimed but that hasn't moved off the default
+// "ליד ראשוני" status — i.e. no note/call/status change yet — within this many hours of arriving.
+// Distinct from STUCK_LEAD_MS (a lead that moved forward once and then went quiet) and from
+// UNCLAIMED_ALERT_MS (nobody even claimed it yet).
+export const FIRST_RESPONSE_SLA_MS = 4 * 3600 * 1000;
 
 export const REMIND_BEFORE_OPTIONS = [
   [0, "בזמן היעד בלבד"],

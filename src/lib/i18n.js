@@ -301,6 +301,8 @@ export const EN_TRANSLATIONS = {
   "חייבים באיחור מעל שבועיים": "Overdue by more than two weeks",
   "ללא תשלום מאז": "Unpaid since",
   "לידים לא משויכים מעל 72 שעות": "Leads unclaimed for over 72 hours",
+  "לידים ללא מענה ראשוני מעל 4 שעות": "Leads with no first response for over 4 hours",
+  "משויך אך עדיין ללא מענה ראשוני": "Claimed but still no first response",
   "לידים תקועים מעל שבוע": "Leads stuck for over a week",
   "בסטטוס": "In status",
   "מאז": "since",

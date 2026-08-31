@@ -9,7 +9,7 @@ import { usePresence } from "./lib/usePresence";
 import { useTaskAlerts } from "./lib/useTaskAlerts";
 import { useIdleLogout } from "./lib/useIdleLogout";
 import { canActLikeManager, isLeadVisibleForUser } from "./lib/permissions";
-import { TWO_WEEKS_MS, UNCLAIMED_ALERT_MS } from "./lib/constants";
+import { TWO_WEEKS_MS, UNCLAIMED_ALERT_MS, FIRST_RESPONSE_SLA_MS } from "./lib/constants";
 import LoginScreen from "./components/LoginScreen";
 import MfaChallengeScreen from "./components/MfaChallengeScreen";
 import Sidebar from "./components/Sidebar";
@@ -181,7 +181,11 @@ function MainApp({ profile }) {
       const pendingNew = leads.filter((l) => l.pending_approval && l.closed_at && new Date(l.closed_at).getTime() > seenAt).length;
       const lateNew = leads.filter((l) => l.owes_payment && l.unpaid_since && Date.now() - new Date(l.unpaid_since).getTime() > TWO_WEEKS_MS && new Date(l.unpaid_since).getTime() > seenAt).length;
       const unclaimedNew = leads.filter((l) => !l.claimed_by && !l.canceled && !l.archived && !l.closed_at && Date.now() - new Date(l.received_at).getTime() > UNCLAIMED_ALERT_MS && new Date(l.received_at).getTime() > seenAt).length;
-      const n = pendingNew + lateNew + unclaimedNew;
+      const noResponseNew = leads.filter((l) =>
+        l.claimed_by && !l.canceled && !l.archived && !l.closed_at && l.process_status === "ליד ראשוני" &&
+        Date.now() - new Date(l.received_at).getTime() > FIRST_RESPONSE_SLA_MS && new Date(l.received_at).getTime() > seenAt
+      ).length;
+      const n = pendingNew + lateNew + unclaimedNew + noResponseNew;
       if (n > 0) b.notifications = n;
       if (unresolvedManagerNotes.length > 0) b.managerAlerts = unresolvedManagerNotes.length;
     }
